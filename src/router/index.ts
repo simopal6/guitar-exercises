@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import { subApps } from '../shell/subapps'
 
 const routes: RouteRecordRaw[] = [
@@ -7,6 +7,9 @@ const routes: RouteRecordRaw[] = [
 ]
 
 export const router = createRouter({
-  history: createWebHistory(),
+  // Hash history (e.g. ".../#/intervals") instead of createWebHistory:
+  // GitHub Pages is a static host with no server-side rewrite rule, so a
+  // hard refresh or direct link on a non-root path would otherwise 404.
+  history: createWebHashHistory(),
   routes,
 })
