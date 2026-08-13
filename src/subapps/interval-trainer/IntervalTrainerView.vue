@@ -83,6 +83,14 @@ function formatTime(totalSeconds: number): string {
           @click="answer(index)"
         />
       </div>
+
+      <button
+        type="button"
+        class="text-center text-sm font-medium text-slate-500 underline-offset-2 hover:underline dark:text-slate-400"
+        @click="reset"
+      >
+        Interrompi esercizio
+      </button>
     </template>
 
     <SessionResult
