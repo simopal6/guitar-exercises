@@ -59,13 +59,13 @@ describe('useIntervalExercise', () => {
     expect(result.answered.value).toBe(true)
   })
 
-  it('auto-advances to a fresh question ~700ms after answering, without a manual next()', () => {
+  it('auto-advances to a fresh question ~1s after answering, without a manual next()', () => {
     const { result } = withSetup(useIntervalExercise)
     result.start()
     result.answer(result.currentQuestion.value!.correctIndex)
     expect(result.answered.value).toBe(true)
 
-    vi.advanceTimersByTime(700)
+    vi.advanceTimersByTime(1000)
     expect(result.answered.value).toBe(false)
     expect(result.selectedIndex.value).toBeNull()
     expect(result.currentQuestion.value).not.toBeNull()

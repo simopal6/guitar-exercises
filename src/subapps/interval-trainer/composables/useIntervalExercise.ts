@@ -12,7 +12,7 @@ export const DURATIONS = [
   { seconds: 180, label: '3 minuti' },
 ] as const
 
-const AUTO_ADVANCE_DELAY_MS = 700
+const AUTO_ADVANCE_DELAY_MS = 1000
 const TIMER_TICK_MS = 250
 
 export type SessionPhase = 'setup' | 'running' | 'finished'
