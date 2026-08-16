@@ -20,4 +20,11 @@ export const subApps: SubAppDefinition[] = [
     icon: '🎵',
     component: () => import('../subapps/interval-trainer/IntervalTrainerView.vue'),
   },
+  {
+    id: 'chord-trainer',
+    title: 'Accordi',
+    path: '/chords',
+    icon: '🎸',
+    component: () => import('../subapps/chord-trainer/ChordTrainerView.vue'),
+  },
 ]
