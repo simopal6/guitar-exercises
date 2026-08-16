@@ -5,7 +5,7 @@ import { getPairTempo, setPairTempo } from '../../pairTempoStore'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
-  class MembraneSynth {
+  class MetalSynth {
     triggerAttackRelease = vi.fn()
     dispose = vi.fn()
     toDestination() {
@@ -23,7 +23,7 @@ vi.mock('tone', () => {
       this.interval = interval
     }
   }
-  return { start: vi.fn().mockResolvedValue(undefined), Transport, MembraneSynth, Loop }
+  return { start: vi.fn().mockResolvedValue(undefined), Transport, MetalSynth, Loop }
 })
 
 import { useChordPairExercise } from '../useChordPairExercise'

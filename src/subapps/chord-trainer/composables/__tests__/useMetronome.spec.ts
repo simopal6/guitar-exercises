@@ -6,7 +6,7 @@ vi.mock('tone', () => {
     start: vi.fn(),
     stop: vi.fn(),
   }
-  class MembraneSynth {
+  class MetalSynth {
     triggerAttackRelease = vi.fn()
     dispose = vi.fn()
     toDestination() {
@@ -27,7 +27,7 @@ vi.mock('tone', () => {
   return {
     start: vi.fn().mockResolvedValue(undefined),
     Transport,
-    MembraneSynth,
+    MetalSynth,
     Loop,
   }
 })

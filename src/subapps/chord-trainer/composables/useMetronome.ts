@@ -34,18 +34,21 @@ export function useMetronome(initialBpm: number): Metronome {
   const bpm = ref(clampBpm(initialBpm))
 
   let Tone: typeof import('tone') | null = null
-  let synth: import('tone').MembraneSynth | null = null
+  let synth: import('tone').MetalSynth | null = null
   let loop: import('tone').Loop | null = null
 
   async function ensureEngine(): Promise<typeof import('tone')> {
     if (!Tone) Tone = await import('tone')
     await Tone.start() // no-op if the context is already running
     if (!synth) {
-      // Short, percussive, no samples: fast pitch decay + zero sustain reads as a click, not a tone.
-      synth = new Tone.MembraneSynth({
-        pitchDecay: 0.008,
-        octaves: 2,
-        envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 },
+      // Bright, metallic percussive hit (the same synthesis technique often
+      // used for hi-hats) — short and inharmonic, reads as a crisp "tick".
+      synth = new Tone.MetalSynth({
+        envelope: { attack: 0.001, decay: 0.08, release: 0.01 },
+        harmonicity: 5.1,
+        modulationIndex: 32,
+        resonance: 4000,
+        octaves: 1.5,
       }).toDestination()
     }
     if (!loop) {
@@ -53,7 +56,7 @@ export function useMetronome(initialBpm: number): Metronome {
       // milliseconds: Transport recomputes real-world tick times from its
       // own bpm, so the Loop callback never needs to know the current bpm.
       loop = new Tone.Loop((time) => {
-        synth?.triggerAttackRelease('C2', '16n', time)
+        synth?.triggerAttackRelease('16n', time)
       }, '4n')
     }
     Tone.Transport.bpm.value = bpm.value
