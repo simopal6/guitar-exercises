@@ -1,4 +1,5 @@
 import { computed, onUnmounted, ref } from 'vue'
+import { useWakeLock } from '../../../composables/useWakeLock'
 import type { Chord, ChordList } from '../chord'
 import { getPairTempo, setPairTempo } from '../pairTempoStore'
 import { useMetronome } from './useMetronome'
@@ -53,6 +54,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
 
   const metronome = useMetronome(baseBpm.value)
   const bpm = metronome.bpm // single source of truth for the live tempo value
+  const wakeLock = useWakeLock()
 
   const canStart = computed(() => (selectedList.value?.chords.length ?? 0) >= 2)
 
@@ -112,7 +114,8 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   async function start() {
     if (!canStart.value) return
     bag = []
-    await metronome.start() // user-gesture-gated
+    await wakeLock.request() // same user gesture that unlocks the metronome's audio context
+    await metronome.start()
     phase.value = 'running'
     startTurn()
     clearTimer()
@@ -122,6 +125,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   function stop() {
     clearTimer()
     metronome.stop()
+    wakeLock.release()
     phase.value = 'setup'
     currentPair.value = null
   }
@@ -151,6 +155,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   onUnmounted(() => {
     clearTimer()
     metronome.dispose()
+    wakeLock.release() // covers navigating away from the screen mid-exercise
   })
 
   return {
