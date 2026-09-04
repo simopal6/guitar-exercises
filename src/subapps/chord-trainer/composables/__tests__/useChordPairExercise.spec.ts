@@ -23,9 +23,26 @@ vi.mock('tone', () => {
       this.interval = interval
     }
   }
-  return { start: vi.fn().mockResolvedValue(undefined), Transport, MetalSynth, Loop }
+  const synthTriggerAttackRelease = vi.fn()
+  class Synth {
+    triggerAttackRelease = synthTriggerAttackRelease
+    dispose = vi.fn()
+    toDestination() {
+      return this
+    }
+  }
+  return {
+    start: vi.fn().mockResolvedValue(undefined),
+    Transport,
+    MetalSynth,
+    Loop,
+    Synth,
+    Frequency: vi.fn(() => ({ toFrequency: () => 440 })),
+    __synthTriggerAttackRelease: synthTriggerAttackRelease,
+  }
 })
 
+import * as Tone from 'tone'
 import { useChordPairExercise } from '../useChordPairExercise'
 
 function withSetup<T>(composable: () => T): { result: T; unmount: () => void } {
@@ -52,6 +69,7 @@ const threeChordList: ChordList = {
 beforeEach(() => {
   vi.useFakeTimers()
   localStorage.clear()
+  ;(Tone as unknown as { __synthTriggerAttackRelease: ReturnType<typeof vi.fn> }).__synthTriggerAttackRelease.mockClear()
 })
 
 afterEach(() => {
@@ -107,6 +125,20 @@ describe('useChordPairExercise', () => {
       vi.advanceTimersByTime(2_000) // end of gap -> next turn
     }
     expect(seenPairKeys.size).toBe(3) // C-A, C-G, A-G all distinct — 3 chords = 3 unique pairs
+  })
+
+  it('plays a one-shot sound when the active turn ends and the gap begins', async () => {
+    const triggerAttackRelease = (Tone as unknown as { __synthTriggerAttackRelease: ReturnType<typeof vi.fn> })
+      .__synthTriggerAttackRelease
+
+    const { result } = withSetup(() => useChordPairExercise({ turnDurationSeconds: 10, gapSeconds: 2 }))
+    result.setSelectedList(threeChordList)
+    await result.start()
+    expect(triggerAttackRelease).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(10_000) // end of turn -> gap, flushing the async playNote() chain
+    expect(result.turnState.value).toBe('gap')
+    expect(triggerAttackRelease).toHaveBeenCalledTimes(1)
   })
 
   it('adjustBpm moves in steps of 5 and persists immediately for the current pair', async () => {

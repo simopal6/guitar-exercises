@@ -85,9 +85,9 @@ const barMarks = computed(() =>
 
 <template>
   <div v-if="strings" class="flex flex-col items-center gap-1">
-    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+    <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">
       {{ chord.name }}
-      <span v-if="chord.variant" class="ml-1 text-xs font-normal text-slate-400">({{ chord.variant }})</span>
+      <span v-if="chord.variant" class="ml-1 text-sm font-normal text-slate-400">({{ chord.variant }})</span>
     </p>
 
     <svg

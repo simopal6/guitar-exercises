@@ -24,8 +24,8 @@ defineProps<{
           v-else
           class="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-700"
         >
-          <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ chord.name }}</p>
-          <p v-if="chord.variant" class="text-xs text-slate-400">{{ chord.variant }}</p>
+          <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">{{ chord.name }}</p>
+          <p v-if="chord.variant" class="text-sm text-slate-400">{{ chord.variant }}</p>
         </div>
       </div>
     </div>

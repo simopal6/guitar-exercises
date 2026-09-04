@@ -1,8 +1,12 @@
 import { computed, onUnmounted, ref } from 'vue'
+import { useAudioPlayer } from '../../../components/audio/useAudioPlayer'
 import { useWakeLock } from '../../../composables/useWakeLock'
 import type { Chord, ChordList } from '../chord'
 import { getPairTempo, setPairTempo } from '../pairTempoStore'
 import { useMetronome } from './useMetronome'
+
+const TURN_END_NOTE = 'C5'
+const TURN_END_DURATION_SECONDS = 0.3
 
 export type ExercisePhase = 'setup' | 'running'
 export type TurnState = 'active' | 'gap'
@@ -55,6 +59,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   const metronome = useMetronome(baseBpm.value)
   const bpm = metronome.bpm // single source of truth for the live tempo value
   const wakeLock = useWakeLock()
+  const audioPlayer = useAudioPlayer()
 
   const canStart = computed(() => (selectedList.value?.chords.length ?? 0) >= 2)
 
@@ -101,6 +106,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     turnState.value = 'gap'
     endAt = Date.now() + gapSeconds * 1000
     // metronome deliberately keeps clicking through the gap, as a count-in
+    void audioPlayer.playNote(TURN_END_NOTE, TURN_END_DURATION_SECONDS)
   }
 
   function tick() {
@@ -155,6 +161,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   onUnmounted(() => {
     clearTimer()
     metronome.dispose()
+    audioPlayer.dispose()
     wakeLock.release() // covers navigating away from the screen mid-exercise
   })
 
