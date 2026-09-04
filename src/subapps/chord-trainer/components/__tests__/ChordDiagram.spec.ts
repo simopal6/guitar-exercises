@@ -76,4 +76,12 @@ describe('ChordDiagram', () => {
     const wrapper = mount(ChordDiagram, { props: { chord: fBarre } })
     expect(wrapper.text()).not.toMatch(/\dfr/)
   })
+
+  it('hides the fretboard svg but keeps showing the name when revealed is false', () => {
+    const wrapper = mount(ChordDiagram, { props: { chord: openC, revealed: false } })
+    expect(wrapper.find('svg').exists()).toBe(false)
+    expect(wrapper.findAll('circle')).toHaveLength(0)
+    expect(wrapper.text()).toContain('C')
+    expect(wrapper.text()).toContain('open')
+  })
 })

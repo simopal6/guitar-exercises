@@ -6,6 +6,7 @@ defineProps<{
   pair: [Chord, Chord]
   remainingSeconds: number
   turnState: 'active' | 'gap'
+  fingeringRevealed: boolean
 }>()
 </script>
 
@@ -19,13 +20,13 @@ defineProps<{
 
     <div class="grid w-full grid-cols-2 gap-4">
       <div v-for="chord in pair" :key="chord.id" class="flex items-center justify-center">
-        <ChordDiagram v-if="chord.strings" :chord="chord" />
+        <ChordDiagram v-if="chord.strings" :chord="chord" :revealed="fingeringRevealed" />
         <div
           v-else
           class="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-700"
         >
-          <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">{{ chord.name }}</p>
-          <p v-if="chord.variant" class="text-sm text-slate-400">{{ chord.variant }}</p>
+          <p class="w-full text-center text-5xl font-extrabold text-slate-700 dark:text-slate-200">{{ chord.name }}</p>
+          <p v-if="chord.variant" class="w-full text-center text-xl font-semibold text-slate-900 dark:text-white">{{ chord.variant }}</p>
         </div>
       </div>
     </div>

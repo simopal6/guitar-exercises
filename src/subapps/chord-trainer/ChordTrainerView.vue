@@ -16,6 +16,7 @@ const {
   selectedList,
   currentPair,
   remainingSeconds,
+  fingeringRevealed,
   bpm,
   turnDurationSeconds,
   baseBpm,
@@ -90,7 +91,12 @@ function onSelectList(id: string) {
     </template>
 
     <template v-else-if="phase === 'running' && currentPair">
-      <PairView :pair="currentPair" :remaining-seconds="remainingSeconds" :turn-state="turnState" />
+      <PairView
+        :pair="currentPair"
+        :remaining-seconds="remainingSeconds"
+        :turn-state="turnState"
+        :fingering-revealed="fingeringRevealed"
+      />
       <MetronomeControl :bpm="bpm" @adjust="adjustBpm" />
       <button
         type="button"

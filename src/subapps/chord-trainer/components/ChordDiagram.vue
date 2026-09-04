@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { Chord, FingerLabel } from '../chord'
 import { guitarStringNumberToIndex, soundingNoteName } from '../chord'
 
-const props = defineProps<{ chord: Chord }>()
+const props = withDefaults(defineProps<{ chord: Chord; revealed?: boolean }>(), { revealed: true })
 
 const STRING_COUNT = 6
 const WINDOW_SIZE = 4 // fret cells shown (5 horizontal lines) — see ChordDiagram rationale in the plan
@@ -85,12 +85,12 @@ const barMarks = computed(() =>
 
 <template>
   <div v-if="strings" class="flex flex-col items-center gap-1">
-    <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">
-      {{ chord.name }}
-      <span v-if="chord.variant" class="ml-1 text-sm font-normal text-slate-400">({{ chord.variant }})</span>
-    </p>
+    <p class="w-full text-center text-5xl font-extrabold text-slate-700 dark:text-slate-200">{{ chord.name }}</p>
+    <p v-if="chord.variant" class="w-full text-center text-xl font-semibold text-slate-900 dark:text-white">{{ chord.variant }}</p>
 
+    <div v-if="!revealed" :style="{ width: `${svgWidth}px`, maxWidth: '100%', height: `${svgHeight}px` }" />
     <svg
+      v-else
       :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
       :style="{ width: `${svgWidth}px`, maxWidth: '100%', height: 'auto' }"
       class="select-none"

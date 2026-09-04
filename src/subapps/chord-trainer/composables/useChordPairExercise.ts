@@ -7,6 +7,7 @@ import { useMetronome } from './useMetronome'
 
 const TURN_END_NOTE = 'C5'
 const TURN_END_DURATION_SECONDS = 0.3
+const FINGERING_REVEAL_DELAY_MS = 5000
 
 export type ExercisePhase = 'setup' | 'running'
 export type TurnState = 'active' | 'gap'
@@ -55,6 +56,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   const selectedList = ref<ChordList | null>(null)
   const currentPair = ref<[Chord, Chord] | null>(null)
   const remainingSeconds = ref(turnDurationSeconds.value)
+  const fingeringRevealed = ref(false)
 
   const metronome = useMetronome(baseBpm.value)
   const bpm = metronome.bpm // single source of truth for the live tempo value
@@ -66,6 +68,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   let bag: Array<[string, string]> = []
   let timer: ReturnType<typeof setInterval> | null = null
   let endAt = 0
+  let turnStartAt = 0
 
   function clearTimer() {
     if (timer !== null) {
@@ -100,6 +103,8 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
 
     turnState.value = 'active'
     endAt = Date.now() + turnDurationSeconds.value * 1000
+    turnStartAt = Date.now()
+    fingeringRevealed.value = false
   }
 
   function startGap() {
@@ -112,6 +117,13 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   function tick() {
     const msLeft = endAt - Date.now()
     remainingSeconds.value = Math.max(0, Math.ceil(msLeft / 1000))
+    if (
+      turnState.value === 'active' &&
+      !fingeringRevealed.value &&
+      Date.now() - turnStartAt >= FINGERING_REVEAL_DELAY_MS
+    ) {
+      fingeringRevealed.value = true
+    }
     if (msLeft > 0) return
     if (turnState.value === 'active') startGap()
     else startTurn()
@@ -171,6 +183,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     selectedList,
     currentPair,
     remainingSeconds,
+    fingeringRevealed,
     bpm,
     turnDurationSeconds,
     baseBpm,

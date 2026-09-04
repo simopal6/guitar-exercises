@@ -141,6 +141,28 @@ describe('useChordPairExercise', () => {
     expect(triggerAttackRelease).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the fingering hidden for the first 5s of each active turn, then reveals it', async () => {
+    const { result } = withSetup(() => useChordPairExercise({ turnDurationSeconds: 10, gapSeconds: 2 }))
+    result.setSelectedList(threeChordList)
+    await result.start()
+
+    expect(result.fingeringRevealed.value).toBe(false)
+    vi.advanceTimersByTime(4_900)
+    expect(result.fingeringRevealed.value).toBe(false)
+
+    vi.advanceTimersByTime(200) // crosses the 5s mark, still within the 10s active turn
+    expect(result.fingeringRevealed.value).toBe(true)
+    expect(result.turnState.value).toBe('active')
+
+    await vi.advanceTimersByTimeAsync(5_000) // end of turn -> gap; stays revealed through the gap
+    expect(result.turnState.value).toBe('gap')
+    expect(result.fingeringRevealed.value).toBe(true)
+
+    vi.advanceTimersByTime(2_000) // end of gap -> next turn hides it again
+    expect(result.turnState.value).toBe('active')
+    expect(result.fingeringRevealed.value).toBe(false)
+  })
+
   it('adjustBpm moves in steps of 5 and persists immediately for the current pair', async () => {
     const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
     result.setSelectedList(threeChordList)
