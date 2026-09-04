@@ -72,7 +72,13 @@ beforeEach(() => {
   ;(Tone as unknown as { __synthTriggerAttackRelease: ReturnType<typeof vi.fn> }).__synthTriggerAttackRelease.mockClear()
 })
 
-afterEach(() => {
+afterEach(async () => {
+  // Flushes microtasks so a not-yet-awaited playNote() promise (dynamic
+  // import + async calls) can't resolve during a later test and inflate its
+  // call-count assertions on the shared Tone mock.
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
   vi.useRealTimers()
 })
 
@@ -121,8 +127,12 @@ describe('useChordPairExercise', () => {
     for (let i = 0; i < 3; i++) {
       const [a, b] = result.currentPair.value!
       seenPairKeys.add([a.id, b.id].sort().join('::'))
-      vi.advanceTimersByTime(10_000) // end of turn -> gap
-      vi.advanceTimersByTime(2_000) // end of gap -> next turn
+      // *Async and awaited: end-of-turn triggers the async playNote() sound
+      // (see useChordPairExercise's startGap()) — draining it here keeps its
+      // pending promise from leaking into (and inflating call counts in) a
+      // later test that asserts on the same shared mock.
+      await vi.advanceTimersByTimeAsync(10_000) // end of turn -> gap
+      await vi.advanceTimersByTimeAsync(2_000) // end of gap -> next turn
     }
     expect(seenPairKeys.size).toBe(3) // C-A, C-G, A-G all distinct — 3 chords = 3 unique pairs
   })
