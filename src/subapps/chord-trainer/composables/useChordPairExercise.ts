@@ -2,8 +2,8 @@ import { computed, onUnmounted, ref } from 'vue'
 import { useAudioPlayer } from '../../../components/audio/useAudioPlayer'
 import { useWakeLock } from '../../../composables/useWakeLock'
 import type { Chord, ChordList } from '../chord'
-import { getPairTempo, setPairTempo } from '../pairTempoStore'
-import { useMetronome } from './useMetronome'
+import { getChordTempo, setChordTempo } from '../chordTempoStore'
+import { clampBpm, useMetronome } from './useMetronome'
 
 const TURN_END_NOTE = 'C5'
 const TURN_END_DURATION_SECONDS = 0.3
@@ -96,10 +96,13 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     if (!a || !b) return // defensive: selectedList is locked during 'running', ids always resolve
     currentPair.value = [a, b]
 
-    const stored = getPairTempo(idA, idB)
-    const resolvedBpm = stored ?? baseBpm.value
-    if (stored === undefined) setPairTempo(idA, idB, resolvedBpm) // baseline established the first time this pair is seen
-    metronome.setBpm(resolvedBpm)
+    const storedA = getChordTempo(idA)
+    const storedB = getChordTempo(idB)
+    const tempoA = storedA ?? baseBpm.value
+    const tempoB = storedB ?? baseBpm.value
+    if (storedA === undefined) setChordTempo(idA, tempoA) // baseline established the first time this chord is seen
+    if (storedB === undefined) setChordTempo(idB, tempoB)
+    metronome.setBpm(Math.min(tempoA, tempoB))
 
     turnState.value = 'active'
     endAt = Date.now() + turnDurationSeconds.value * 1000
@@ -148,11 +151,29 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     currentPair.value = null
   }
 
+  /**
+   * Increase and decrease are symmetric: both act only on whichever chord
+   * currently has the LOWER tempo (or both, if tied) — the pair's speed is
+   * bottlenecked by its slower chord, and the faster one must never regress
+   * just because it happened to be paired with a slower partner.
+   */
   function adjustBpm(steps: number) {
     if (!currentPair.value) return
-    metronome.setBpm(bpm.value + steps * BPM_STEP)
     const [a, b] = currentPair.value
-    setPairTempo(a.id, b.id, bpm.value) // persists the clamped value, immediately
+    const tempoA = getChordTempo(a.id) ?? baseBpm.value
+    const tempoB = getChordTempo(b.id) ?? baseBpm.value
+    const delta = steps * BPM_STEP
+
+    if (tempoA === tempoB) {
+      setChordTempo(a.id, clampBpm(tempoA + delta))
+      setChordTempo(b.id, clampBpm(tempoB + delta))
+    } else if (tempoA < tempoB) {
+      setChordTempo(a.id, clampBpm(tempoA + delta))
+    } else {
+      setChordTempo(b.id, clampBpm(tempoB + delta))
+    }
+
+    metronome.setBpm(Math.min(getChordTempo(a.id)!, getChordTempo(b.id)!))
   }
 
   function setSelectedList(list: ChordList | null) {

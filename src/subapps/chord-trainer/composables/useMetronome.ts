@@ -13,7 +13,8 @@ export interface Metronome {
 
 const MIN_BPM = 20 // technical floor only, per spec — no pedagogical minimum/maximum
 
-function clampBpm(bpm: number): number {
+/** Exported so per-chord tempo persistence (chordTempoStore) stays consistent with what the metronome can actually play. */
+export function clampBpm(bpm: number): number {
   return Math.max(MIN_BPM, Math.round(bpm))
 }
 

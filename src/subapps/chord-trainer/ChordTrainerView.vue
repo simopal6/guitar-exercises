@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useChordPairExercise } from './composables/useChordPairExercise'
 import { getAllLists } from './chordListsStore'
+import { purgeLegacyPairTempoFormat } from './chordTempoStore'
 import { seedCagedListIfNeeded } from './seedCaged'
 import PairView from './components/PairView.vue'
 import MetronomeControl from './components/MetronomeControl.vue'
@@ -44,6 +45,7 @@ function refreshLists() {
 
 onMounted(() => {
   seedCagedListIfNeeded()
+  purgeLegacyPairTempoFormat()
   refreshLists()
 })
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { ChordList } from '../../chord'
-import { getPairTempo, setPairTempo } from '../../pairTempoStore'
+import { getChordTempo, setChordTempo } from '../../chordTempoStore'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
@@ -106,16 +106,30 @@ describe('useChordPairExercise', () => {
     expect(result.bpm.value).toBe(50)
   })
 
-  it('uses the stored tempo (not the base) for a pair that was already recorded', async () => {
-    setPairTempo('c-open', 'a-open', 90)
-    setPairTempo('c-open', 'g-open', 90)
-    setPairTempo('a-open', 'g-open', 90)
+  it('uses the stored per-chord tempo (not the base) for chords that were already recorded', async () => {
+    setChordTempo('c-open', 90)
+    setChordTempo('a-open', 90)
+    setChordTempo('g-open', 90)
 
     const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
     result.setSelectedList(threeChordList)
     await result.start()
 
-    expect(result.bpm.value).toBe(90) // every possible pair was pre-seeded at 90
+    expect(result.bpm.value).toBe(90) // every chord was pre-seeded at 90, so any pair's minimum is 90
+  })
+
+  it('starts a never-seen pair at the minimum of the two chords\' individually recorded tempos', async () => {
+    setChordTempo('c-open', 90)
+    setChordTempo('a-open', 70)
+    setChordTempo('g-open', 60)
+
+    const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
+    result.setSelectedList(threeChordList)
+    await result.start()
+
+    const [a, b] = result.currentPair.value!
+    const expectedTempos: Record<string, number> = { 'c-open': 90, 'a-open': 70, 'g-open': 60 }
+    expect(result.bpm.value).toBe(Math.min(expectedTempos[a.id], expectedTempos[b.id]))
   })
 
   it('shuffled bag serves every unique pair once before any repeat', async () => {
@@ -173,18 +187,67 @@ describe('useChordPairExercise', () => {
     expect(result.fingeringRevealed.value).toBe(false)
   })
 
-  it('adjustBpm moves in steps of 5 and persists immediately for the current pair', async () => {
+  it('adjustBpm moves both chords together when they are tied on the same tempo', async () => {
     const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
     result.setSelectedList(threeChordList)
     await result.start()
+    const [a, b] = result.currentPair.value! // both start at baseBpm (50), i.e. tied
 
     result.adjustBpm(1)
     expect(result.bpm.value).toBe(55)
-    const [a, b] = result.currentPair.value!
-    expect(getPairTempo(a.id, b.id)).toBe(55)
+    expect(getChordTempo(a.id)).toBe(55)
+    expect(getChordTempo(b.id)).toBe(55)
 
     result.adjustBpm(-1)
     expect(result.bpm.value).toBe(50)
+    expect(getChordTempo(a.id)).toBe(50)
+    expect(getChordTempo(b.id)).toBe(50)
+  })
+
+  it('adjustBpm decrease only lowers the slower chord, never the faster one', async () => {
+    const twoChordList: ChordList = {
+      id: 'l2',
+      name: 'Two',
+      chords: [
+        { id: 'c-open', name: 'C' },
+        { id: 'a-open', name: 'A' },
+      ],
+    }
+    setChordTempo('c-open', 90)
+    setChordTempo('a-open', 60)
+
+    const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
+    result.setSelectedList(twoChordList)
+    await result.start() // only one possible pair: c-open (90) + a-open (60), never tied
+
+    result.adjustBpm(-1)
+
+    expect(getChordTempo('a-open')).toBe(55) // slower chord: 60 - 5
+    expect(getChordTempo('c-open')).toBe(90) // faster chord: untouched
+    expect(result.bpm.value).toBe(55)
+  })
+
+  it('adjustBpm increase only raises the slower chord, never the faster one', async () => {
+    const twoChordList: ChordList = {
+      id: 'l2',
+      name: 'Two',
+      chords: [
+        { id: 'c-open', name: 'C' },
+        { id: 'a-open', name: 'A' },
+      ],
+    }
+    setChordTempo('c-open', 90)
+    setChordTempo('a-open', 60)
+
+    const { result } = withSetup(() => useChordPairExercise({ baseBpm: 50 }))
+    result.setSelectedList(twoChordList)
+    await result.start() // only one possible pair: c-open (90) + a-open (60), never tied
+
+    result.adjustBpm(1)
+
+    expect(getChordTempo('a-open')).toBe(65) // slower chord: 60 + 5
+    expect(getChordTempo('c-open')).toBe(90) // faster chord: untouched
+    expect(result.bpm.value).toBe(65)
   })
 
   it('stop() returns to setup, clears the current pair, and stops the timer', async () => {
