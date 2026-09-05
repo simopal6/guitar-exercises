@@ -12,7 +12,8 @@ export function shuffle<T>(items: readonly T[], rng: () => number): T[] {
 
 /**
  * Mix of "near" semitone counts (plausible near-misses) and uniformly random
- * remaining values from the full 0-12 set, deduplicated.
+ * remaining values from the 1-12 set, deduplicated. Unison (0 semitones) is
+ * deliberately excluded from the candidate pool, not just from `correct`.
  */
 export function generateSemitoneDistractors(
   correct: number,
@@ -21,12 +22,12 @@ export function generateSemitoneDistractors(
 ): number[] {
   const near = shuffle([1, -1, 2, -2, 3, -3], rng)
     .map((delta) => correct + delta)
-    .filter((candidate) => candidate >= 0 && candidate <= 12)
+    .filter((candidate) => candidate >= 1 && candidate <= 12)
 
   const distractors = new Set<number>(near)
 
   const rest = shuffle(
-    Array.from({ length: 13 }, (_, i) => i).filter((n) => n !== correct),
+    Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => n !== correct),
     rng,
   )
   for (const candidate of rest) {
@@ -48,10 +49,9 @@ export function generateNameDistractors(
 
 /**
  * Distinct playable shape distractors. Each candidate is a freely-generated
- * shape (never forced to an exact semitone count — some counts are
- * geometrically unreachable for a given difficulty, e.g. a Unison at
- * beginner level), resampled until `count` distinct-interval shapes are
- * found or the attempt budget runs out.
+ * shape (never forced to an exact semitone count — some counts can be
+ * geometrically unreachable for a given difficulty), resampled until
+ * `count` distinct-interval shapes are found or the attempt budget runs out.
  */
 export function generateShapeDistractors(
   correctSemitones: number,

@@ -16,14 +16,24 @@ function seededRng(seed: number): () => number {
 describe('distractors', () => {
   it('generates the requested number of unique semitone distractors, excluding the correct answer', () => {
     const rng = seededRng(1)
-    for (let correct = 0; correct <= 12; correct++) {
+    for (let correct = 1; correct <= 12; correct++) {
       const distractors = generateSemitoneDistractors(correct, 3, rng)
       expect(distractors).toHaveLength(3)
       expect(new Set(distractors).size).toBe(3)
       expect(distractors).not.toContain(correct)
       for (const d of distractors) {
-        expect(d).toBeGreaterThanOrEqual(0)
+        expect(d).toBeGreaterThanOrEqual(1)
         expect(d).toBeLessThanOrEqual(12)
+      }
+    }
+  })
+
+  it('never includes Unison (0 semitones) as a distractor', () => {
+    const rng = seededRng(9)
+    for (let correct = 1; correct <= 12; correct++) {
+      for (let i = 0; i < 20; i++) {
+        const distractors = generateSemitoneDistractors(correct, 3, rng)
+        expect(distractors).not.toContain(0)
       }
     }
   })

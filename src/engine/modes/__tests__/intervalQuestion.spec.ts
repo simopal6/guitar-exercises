@@ -21,8 +21,8 @@ const DIFFICULTIES: Array<(typeof DIFFICULTY_LEVELS)[number] | null> = [null, ..
 describe('generateIntervalQuestion — shape modes', () => {
   // Regression guard for the "unreachable semitone" bug: forcing an exact
   // semitone count onto generateShape can be geometrically impossible for
-  // some difficulty/tuning combos (e.g. a Unison at beginner level). This
-  // must never throw across every mode x difficulty combination.
+  // some difficulty/tuning combos. This must never throw across every mode
+  // x difficulty combination.
   for (const modeId of SHAPE_MODE_IDS) {
     for (const difficulty of DIFFICULTIES) {
       const label = difficulty?.label ?? 'nessuna difficoltà'
@@ -80,6 +80,22 @@ describe('generateIntervalQuestion — shape modes', () => {
       }
     }
   })
+
+  for (const modeId of SHAPE_MODE_IDS) {
+    it(`never draws Unison for mode "${modeId}", in the question or in any choice`, () => {
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], null, seededRng(23))
+      for (let i = 0; i < 200; i++) {
+        const q = engine.nextQuestion()
+        expect(q.semitones).not.toBe(0)
+        expect(q.intervalName).not.toBe('Unison')
+        for (const choice of q.choices) {
+          if (choice.face === 'semitones') expect(choice.value).not.toBe(0)
+          if (choice.face === 'name') expect(choice.value).not.toBe('Unison')
+          if (choice.face === 'shape') expect(choice.value.semitones).not.toBe(0)
+        }
+      }
+    })
+  }
 })
 
 describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', () => {
@@ -90,6 +106,19 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
       expect(q.choices).toHaveLength(4)
       expect(new Set([q.questionFace, q.answerFace])).toEqual(new Set(['name', 'semitones']))
       expect(q.choices.every((c) => c.face === 'name' || c.face === 'semitones')).toBe(true)
+    }
+  })
+
+  it('never draws Unison, in the question or in any choice', () => {
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, seededRng(29))
+    for (let i = 0; i < 200; i++) {
+      const q = engine.nextQuestion()
+      expect(q.semitones).not.toBe(0)
+      expect(q.intervalName).not.toBe('Unison')
+      for (const choice of q.choices) {
+        if (choice.face === 'semitones') expect(choice.value).not.toBe(0)
+        if (choice.face === 'name') expect(choice.value).not.toBe('Unison')
+      }
     }
   })
 })

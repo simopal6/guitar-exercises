@@ -29,7 +29,9 @@ export function generateIntervalQuestion(
   rng: () => number,
 ): Question {
   const usesShape = mode.questionFace === 'shape' || mode.answerFace === 'shape'
-  const semitoneRange = difficulty?.semitoneRange ?? [0, 12]
+  // Unison (0 semitones) is deliberately excluded across all three modes —
+  // Octave already covers "same note, different position" more usefully.
+  const semitoneRange = difficulty?.semitoneRange ?? [1, 12]
   const shapeOptions = {
     tuning: STANDARD_TUNING,
     allowedRootStrings: difficulty?.allowedRootStrings ?? ALL_STRINGS,
@@ -43,9 +45,8 @@ export function generateIntervalQuestion(
 
   if (usesShape) {
     // Let generateShape pick semitones freely within range: some exact
-    // values are geometrically unreachable for a given difficulty (e.g. a
-    // Unison at beginner level), so we never force semitoneRange to a
-    // single point here.
+    // values can be geometrically unreachable for a given difficulty, so we
+    // never force semitoneRange to a single point here.
     correctShape = generateShape({ ...shapeOptions, semitoneRange, rng })
     semitones = correctShape.semitones
     name = correctShape.intervalName
