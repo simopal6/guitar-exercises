@@ -12,7 +12,8 @@ export const DURATIONS = [
   { seconds: 180, label: '3 minuti' },
 ] as const
 
-const AUTO_ADVANCE_DELAY_MS = 1000
+const CORRECT_ADVANCE_DELAY_MS = 1000
+const INCORRECT_ADVANCE_DELAY_MS = 2500
 const TIMER_TICK_MS = 250
 
 export type SessionPhase = 'setup' | 'running' | 'finished'
@@ -113,9 +114,10 @@ export function useIntervalExercise() {
     answered.value = true
     const result = engine.value.submitAnswer(currentQuestion.value, choiceIndex)
     if (result.correct) score.value += 1
+    const delay = result.correct ? CORRECT_ADVANCE_DELAY_MS : INCORRECT_ADVANCE_DELAY_MS
     autoAdvanceTimer = setTimeout(() => {
       if (phase.value === 'running') loadNextQuestion()
-    }, AUTO_ADVANCE_DELAY_MS)
+    }, delay)
   }
 
   function reset() {

@@ -71,6 +71,23 @@ describe('useIntervalExercise', () => {
     expect(result.currentQuestion.value).not.toBeNull()
   })
 
+  it('auto-advances ~2.5s (not ~1s) after an incorrect answer', () => {
+    const { result } = withSetup(useIntervalExercise)
+    result.start()
+    const q = result.currentQuestion.value!
+    const wrongIndex = (q.correctIndex + 1) % q.choices.length
+    result.answer(wrongIndex)
+    expect(result.answered.value).toBe(true)
+
+    vi.advanceTimersByTime(1000)
+    expect(result.answered.value).toBe(true) // still showing the wrong answer, unlike the correct-answer case
+
+    vi.advanceTimersByTime(1500) // total 2500ms
+    expect(result.answered.value).toBe(false)
+    expect(result.selectedIndex.value).toBeNull()
+    expect(result.currentQuestion.value).not.toBeNull()
+  })
+
   it('answer() is a no-op outside the running phase', () => {
     const { result } = withSetup(useIntervalExercise)
     expect(result.phase.value).toBe('setup')
