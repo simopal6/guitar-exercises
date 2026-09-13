@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getBestScore, recordScore } from '../bestScore'
 
-const BASE = { durationSeconds: 60, modeId: 'name-semitones', difficultyId: 1, usesShape: false }
+const BASE = {
+  durationSeconds: 60,
+  modeId: 'name-semitones',
+  difficultyId: 1,
+  usesShape: false,
+  intervalPreset: 'standard' as const,
+}
 
 beforeEach(() => {
   localStorage.clear()
@@ -49,6 +55,14 @@ describe('bestScore', () => {
     recordScore({ ...BASE, usesShape: false, difficultyId: 1 }, 9)
     expect(getBestScore({ ...BASE, usesShape: false, difficultyId: 2 })).toBe(9)
     expect(getBestScore({ ...BASE, usesShape: false, difficultyId: 3 })).toBe(9)
+  })
+
+  it('keeps standard and completa records separate for the same duration/mode/difficulty', () => {
+    recordScore({ ...BASE, intervalPreset: 'standard' }, 5)
+    recordScore({ ...BASE, intervalPreset: 'completa' }, 9)
+
+    expect(getBestScore({ ...BASE, intervalPreset: 'standard' })).toBe(5)
+    expect(getBestScore({ ...BASE, intervalPreset: 'completa' })).toBe(9)
   })
 
   it('does not throw on malformed JSON in localStorage', () => {

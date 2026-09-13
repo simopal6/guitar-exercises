@@ -9,6 +9,7 @@ export interface ExerciseEngine {
 export function createExerciseEngine(
   mode: ModeConfig,
   difficulty: DifficultyLevel | null = null,
+  allowedSemitones: number[] = Array.from({ length: 12 }, (_, i) => i + 1),
   rng: () => number = Math.random,
 ): ExerciseEngine {
   const generator = MODE_GENERATORS[mode.id]
@@ -18,7 +19,7 @@ export function createExerciseEngine(
 
   return {
     nextQuestion(): Question {
-      return generator(mode, difficulty, rng)
+      return generator(mode, difficulty, allowedSemitones, rng)
     },
     submitAnswer(question: Question, choiceIndex: number) {
       return { correct: choiceIndex === question.correctIndex, correctIndex: question.correctIndex }

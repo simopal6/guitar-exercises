@@ -194,4 +194,86 @@ describe('useIntervalExercise', () => {
     expect(() => vi.advanceTimersByTime(60_000)).not.toThrow()
     expect(result.phase.value).toBe('running') // never transitioned: the interval was cleared
   })
+
+  describe('interval selection', () => {
+    it('defaults to the standard preset with the standard default semitones, canStart true', () => {
+      const { result } = withSetup(useIntervalExercise)
+      expect(result.intervalPreset.value).toBe('standard')
+      expect(result.standardSemitones.value).toEqual([3, 4, 5, 7, 9, 10, 11, 12])
+      expect(result.canStart.value).toBe(true)
+    })
+
+    it('setIntervalPreset persists across composable instances', () => {
+      const { result: first } = withSetup(useIntervalExercise)
+      first.setIntervalPreset('completa')
+      expect(first.intervalPreset.value).toBe('completa')
+
+      const { result: second } = withSetup(useIntervalExercise)
+      expect(second.intervalPreset.value).toBe('completa')
+    })
+
+    it('toggleStandardSemitone adds/removes a semitone and persists it', () => {
+      const { result: first } = withSetup(useIntervalExercise)
+      first.toggleStandardSemitone(3) // was selected -> removed
+      first.toggleStandardSemitone(1) // was not selected -> added
+      expect(first.standardSemitones.value).not.toContain(3)
+      expect(first.standardSemitones.value).toContain(1)
+
+      const { result: second } = withSetup(useIntervalExercise)
+      expect(second.standardSemitones.value).not.toContain(3)
+      expect(second.standardSemitones.value).toContain(1)
+    })
+
+    it('resetStandardSemitones restores the default set', () => {
+      const { result } = withSetup(useIntervalExercise)
+      result.toggleStandardSemitone(3)
+      result.resetStandardSemitones()
+      expect(result.standardSemitones.value).toEqual([3, 4, 5, 7, 9, 10, 11, 12])
+    })
+
+    it('canStart is false and start() is a no-op below the 4-semitone minimum', () => {
+      const { result } = withSetup(useIntervalExercise)
+      for (const s of [3, 4, 5, 7, 9]) result.toggleStandardSemitone(s) // down to [10, 11, 12], 3 left
+      expect(result.standardSemitones.value).toHaveLength(3)
+      expect(result.canStart.value).toBe(false)
+
+      result.start()
+      expect(result.phase.value).toBe('setup')
+    })
+
+    it('setIntervalPreset/toggleStandardSemitone/resetStandardSemitones are no-ops once running', () => {
+      const { result } = withSetup(useIntervalExercise)
+      result.start()
+      result.setIntervalPreset('completa')
+      result.toggleStandardSemitone(1)
+      expect(result.intervalPreset.value).toBe('standard')
+      expect(result.standardSemitones.value).not.toContain(1)
+    })
+
+    it('generated questions stay within a reduced standard set', () => {
+      const { result } = withSetup(useIntervalExercise)
+      const reduced = [3, 4, 5, 7]
+      for (const s of [9, 10, 11, 12]) result.toggleStandardSemitone(s)
+      expect(result.standardSemitones.value).toEqual(reduced)
+      result.start()
+      for (let i = 0; i < 30; i++) {
+        expect(reduced).toContain(result.currentQuestion.value!.semitones)
+        result.answer(0)
+        vi.advanceTimersByTime(2500)
+      }
+    })
+
+    it('best score is tracked separately for standard vs completa', async () => {
+      const { result } = withSetup(useIntervalExercise)
+      result.start()
+      result.answer(result.currentQuestion.value!.correctIndex)
+      vi.advanceTimersByTime(60_000)
+      expect(result.bestScore.value).toBe(1) // standard preset, new best
+
+      result.reset()
+      result.setIntervalPreset('completa')
+      await nextTick()
+      expect(result.bestScore.value).toBe(0) // completa preset has no record yet, despite standard's record existing
+    })
+  })
 })

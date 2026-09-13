@@ -79,4 +79,17 @@ describe('shapes', () => {
       expect(shape.targetPosition.stringIndex).toBe(1)
     }
   })
+
+  it('generateShape only draws semitone counts from an explicit allowedSemitones set', () => {
+    const rng = seededRng(21)
+    for (let i = 0; i < 100; i++) {
+      const shape = generateShape({
+        tuning: STANDARD_TUNING,
+        allowedRootStrings: [0, 1, 2, 3, 4, 5],
+        allowedSemitones: [3, 4, 5],
+        rng,
+      })
+      expect([3, 4, 5]).toContain(shape.semitones)
+    }
+  })
 })

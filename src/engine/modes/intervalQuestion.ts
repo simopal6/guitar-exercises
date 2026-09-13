@@ -26,12 +26,10 @@ function requireShape(shape: GeneratedShape | null): GeneratedShape {
 export function generateIntervalQuestion(
   mode: ModeConfig,
   difficulty: DifficultyLevel | null,
+  allowedSemitones: number[],
   rng: () => number,
 ): Question {
   const usesShape = mode.questionFace === 'shape' || mode.answerFace === 'shape'
-  // Unison (0 semitones) is deliberately excluded across all three modes —
-  // Octave already covers "same note, different position" more usefully.
-  const semitoneRange = difficulty?.semitoneRange ?? [1, 12]
   const shapeOptions = {
     tuning: STANDARD_TUNING,
     allowedRootStrings: difficulty?.allowedRootStrings ?? ALL_STRINGS,
@@ -44,15 +42,14 @@ export function generateIntervalQuestion(
   let correctShape: GeneratedShape | null = null
 
   if (usesShape) {
-    // Let generateShape pick semitones freely within range: some exact
-    // values can be geometrically unreachable for a given difficulty, so we
-    // never force semitoneRange to a single point here.
-    correctShape = generateShape({ ...shapeOptions, semitoneRange, rng })
+    // Let generateShape pick semitones freely within the allowed set: some
+    // exact values can be geometrically unreachable for a given difficulty,
+    // so we never force a single point here.
+    correctShape = generateShape({ ...shapeOptions, allowedSemitones, rng })
     semitones = correctShape.semitones
     name = correctShape.intervalName
   } else {
-    const [min, max] = semitoneRange
-    semitones = min + Math.floor(rng() * (max - min + 1))
+    semitones = allowedSemitones[Math.floor(rng() * allowedSemitones.length)]
     name = randomIntervalName(semitones, rng)
   }
 
@@ -74,15 +71,15 @@ export function generateIntervalQuestion(
 
   let distractors: FaceValue[]
   if (answerFace === 'name') {
-    distractors = generateNameDistractors(name, distractorCount, rng).map(
+    distractors = generateNameDistractors(name, distractorCount, allowedSemitones, rng).map(
       (value) => ({ face: 'name', value }) as const,
     )
   } else if (answerFace === 'semitones') {
-    distractors = generateSemitoneDistractors(semitones, distractorCount, rng).map(
+    distractors = generateSemitoneDistractors(semitones, distractorCount, allowedSemitones, rng).map(
       (value) => ({ face: 'semitones', value }) as const,
     )
   } else {
-    distractors = generateShapeDistractors(semitones, distractorCount, shapeOptions, semitoneRange, rng).map(
+    distractors = generateShapeDistractors(semitones, distractorCount, shapeOptions, allowedSemitones, rng).map(
       (value) => ({ face: 'shape', value }) as const,
     )
   }

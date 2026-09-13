@@ -13,11 +13,14 @@ function seededRng(seed: number): () => number {
   }
 }
 
+const ALL_SEMITONES = Array.from({ length: 12 }, (_, i) => i + 1) // 1-12, matching the app's default (no Unison)
+const FULL_RANGE_WITH_UNISON = Array.from({ length: 13 }, (_, i) => i) // 0-12, the theory-layer default
+
 describe('distractors', () => {
   it('generates the requested number of unique semitone distractors, excluding the correct answer', () => {
     const rng = seededRng(1)
     for (let correct = 1; correct <= 12; correct++) {
-      const distractors = generateSemitoneDistractors(correct, 3, rng)
+      const distractors = generateSemitoneDistractors(correct, 3, ALL_SEMITONES, rng)
       expect(distractors).toHaveLength(3)
       expect(new Set(distractors).size).toBe(3)
       expect(distractors).not.toContain(correct)
@@ -32,15 +35,27 @@ describe('distractors', () => {
     const rng = seededRng(9)
     for (let correct = 1; correct <= 12; correct++) {
       for (let i = 0; i < 20; i++) {
-        const distractors = generateSemitoneDistractors(correct, 3, rng)
+        const distractors = generateSemitoneDistractors(correct, 3, ALL_SEMITONES, rng)
         expect(distractors).not.toContain(0)
+      }
+    }
+  })
+
+  it('only draws distractors from a restricted allowedSemitones set', () => {
+    const rng = seededRng(11)
+    const restricted = [3, 4, 5, 7]
+    for (let i = 0; i < 50; i++) {
+      const distractors = generateSemitoneDistractors(3, 3, restricted, rng)
+      expect(distractors).toHaveLength(3)
+      for (const d of distractors) {
+        expect(restricted).toContain(d)
       }
     }
   })
 
   it('generates unique name distractors, allowing augmented/diminished variants', () => {
     const rng = seededRng(2)
-    const distractors = generateNameDistractors('Major Third', 3, rng)
+    const distractors = generateNameDistractors('Major Third', 3, ALL_SEMITONES, rng)
     expect(distractors).toHaveLength(3)
     expect(new Set(distractors).size).toBe(3)
     expect(distractors).not.toContain('Major Third')
@@ -53,7 +68,7 @@ describe('distractors', () => {
   it('never picks a distractor name equivalent to the correct answer (e.g. Augmented Second for Minor Third)', () => {
     const rng = seededRng(5)
     for (let i = 0; i < 50; i++) {
-      const distractors = generateNameDistractors('Minor Third', 3, rng)
+      const distractors = generateNameDistractors('Minor Third', 3, ALL_SEMITONES, rng)
       expect(distractors).not.toContain('Minor Third')
       expect(distractors).not.toContain('Augmented Second')
     }
@@ -65,7 +80,7 @@ describe('distractors', () => {
     it('finds distinct playable shape distractors, none matching the correct semitone count', () => {
       const rng = seededRng(6)
       for (let i = 0; i < 30; i++) {
-        const distractors = generateShapeDistractors(4, 3, beginnerOptions, [0, 12], rng)
+        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, rng)
         expect(distractors).toHaveLength(3)
         const semitonesUsed = distractors.map((d) => d.semitones)
         expect(new Set(semitonesUsed).size).toBe(3)
@@ -81,8 +96,20 @@ describe('distractors', () => {
     it('never returns the geometrically-unreachable Unison at beginner difficulty', () => {
       const rng = seededRng(7)
       for (let i = 0; i < 30; i++) {
-        const distractors = generateShapeDistractors(4, 3, beginnerOptions, [0, 12], rng)
+        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, rng)
         expect(distractors.map((d) => d.semitones)).not.toContain(0)
+      }
+    })
+
+    it('only draws distractor shapes from a restricted allowedSemitones set', () => {
+      const rng = seededRng(13)
+      const restricted = [3, 4, 5, 7]
+      for (let i = 0; i < 30; i++) {
+        const distractors = generateShapeDistractors(3, 3, beginnerOptions, restricted, rng)
+        expect(distractors).toHaveLength(3)
+        for (const shape of distractors) {
+          expect(restricted).toContain(shape.semitones)
+        }
       }
     })
   })

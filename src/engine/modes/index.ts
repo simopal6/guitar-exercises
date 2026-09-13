@@ -4,6 +4,7 @@ import { generateIntervalQuestion } from './intervalQuestion'
 export type QuestionGenerator = (
   mode: ModeConfig,
   difficulty: DifficultyLevel | null,
+  allowedSemitones: number[],
   rng: () => number,
 ) => Question
 

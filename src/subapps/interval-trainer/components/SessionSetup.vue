@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { DIFFICULTY_LEVELS } from '../../../engine/difficulty'
 import { DURATIONS } from '../composables/useIntervalExercise'
+import IntervalSelector from './IntervalSelector.vue'
+import type { IntervalPreset } from '../selectedIntervalsStore'
 
 defineProps<{
   modeId: string
@@ -8,12 +10,18 @@ defineProps<{
   durationSeconds: number
   usesShape: boolean
   bestScore: number
+  intervalPreset: IntervalPreset
+  standardSemitones: number[]
+  canStart: boolean
 }>()
 
 const emit = defineEmits<{
   'set-mode': [id: string]
   'set-difficulty': [id: number]
   'set-duration': [seconds: number]
+  'set-interval-preset': [preset: IntervalPreset]
+  'toggle-standard-semitone': [semitones: number]
+  'reset-standard-semitones': []
   start: []
 }>()
 
@@ -56,6 +64,14 @@ function pillClass(active: boolean, activeColor: keyof typeof PILL_COLORS): stri
       </div>
     </div>
 
+    <IntervalSelector
+      :interval-preset="intervalPreset"
+      :standard-semitones="standardSemitones"
+      @set-interval-preset="emit('set-interval-preset', $event)"
+      @toggle-standard-semitone="emit('toggle-standard-semitone', $event)"
+      @reset-standard-semitones="emit('reset-standard-semitones')"
+    />
+
     <div v-if="usesShape">
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Difficoltà</p>
       <div class="flex flex-wrap gap-2">
@@ -92,9 +108,14 @@ function pillClass(active: boolean, activeColor: keyof typeof PILL_COLORS): stri
       Record attuale: <span class="font-semibold text-slate-800 dark:text-slate-100">{{ bestScore }}</span>
     </p>
 
+    <p v-if="!canStart" class="text-sm text-amber-600 dark:text-amber-400">
+      Seleziona almeno 4 intervalli per iniziare.
+    </p>
+
     <button
       type="button"
-      class="rounded-xl bg-indigo-600 px-4 py-3 text-center font-semibold text-white hover:bg-indigo-500"
+      class="rounded-xl bg-indigo-600 px-4 py-3 text-center font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+      :disabled="!canStart"
       @click="emit('start')"
     >
       Inizia

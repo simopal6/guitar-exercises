@@ -8,6 +8,9 @@ const baseProps = {
   durationSeconds: 60,
   usesShape: false,
   bestScore: 7,
+  intervalPreset: 'standard' as const,
+  standardSemitones: [3, 4, 5, 7, 9, 10, 11, 12],
+  canStart: true,
 }
 
 describe('SessionSetup', () => {
@@ -23,6 +26,13 @@ describe('SessionSetup', () => {
     const wrapper = mount(SessionSetup, { props: { ...baseProps, usesShape: true } })
     expect(wrapper.text()).toContain('Difficoltà')
     expect(wrapper.text()).toContain('Principiante')
+  })
+
+  it('always shows the interval selector, regardless of usesShape', () => {
+    const wrapper = mount(SessionSetup, { props: baseProps })
+    expect(wrapper.text()).toContain('Intervalli')
+    expect(wrapper.text()).toContain('Standard')
+    expect(wrapper.text()).toContain('Completa')
   })
 
   it('displays the current best score', () => {
@@ -49,5 +59,21 @@ describe('SessionSetup', () => {
     const startButton = wrapper.findAll('button').find((b) => b.text() === 'Inizia')
     await startButton?.trigger('click')
     expect(wrapper.emitted('start')).toHaveLength(1)
+  })
+
+  it('disables the start button and shows a warning when canStart is false', async () => {
+    const wrapper = mount(SessionSetup, { props: { ...baseProps, canStart: false } })
+    const startButton = wrapper.findAll('button').find((b) => b.text() === 'Inizia')
+    expect(startButton?.attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('Seleziona almeno 4 intervalli')
+    await startButton?.trigger('click')
+    expect(wrapper.emitted('start')).toBeUndefined()
+  })
+
+  it('emits set-interval-preset when the Completa pill is clicked', async () => {
+    const wrapper = mount(SessionSetup, { props: baseProps })
+    const completaButton = wrapper.findAll('button').find((b) => b.text() === 'Completa')
+    await completaButton?.trigger('click')
+    expect(wrapper.emitted('set-interval-preset')).toEqual([['completa']])
   })
 })

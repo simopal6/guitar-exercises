@@ -12,22 +12,25 @@ export function shuffle<T>(items: readonly T[], rng: () => number): T[] {
 
 /**
  * Mix of "near" semitone counts (plausible near-misses) and uniformly random
- * remaining values from the 1-12 set, deduplicated. Unison (0 semitones) is
- * deliberately excluded from the candidate pool, not just from `correct`.
+ * remaining values, deduplicated — all drawn from `allowedSemitones` only,
+ * so a distractor can never suggest an interval outside the current
+ * selection (e.g. Unison, or anything the player has deselected).
  */
 export function generateSemitoneDistractors(
   correct: number,
   count: number,
+  allowedSemitones: number[],
   rng: () => number = Math.random,
 ): number[] {
+  const allowedSet = new Set(allowedSemitones)
   const near = shuffle([1, -1, 2, -2, 3, -3], rng)
     .map((delta) => correct + delta)
-    .filter((candidate) => candidate >= 1 && candidate <= 12)
+    .filter((candidate) => allowedSet.has(candidate))
 
   const distractors = new Set<number>(near)
 
   const rest = shuffle(
-    Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => n !== correct),
+    allowedSemitones.filter((n) => n !== correct),
     rng,
   )
   for (const candidate of rest) {
@@ -41,10 +44,13 @@ export function generateSemitoneDistractors(
 export function generateNameDistractors(
   correct: IntervalName,
   count: number,
+  allowedSemitones: number[],
   rng: () => number = Math.random,
 ): IntervalName[] {
   const correctSemitones = intervalSemitones(correct)
-  return generateSemitoneDistractors(correctSemitones, count, rng).map((s) => randomIntervalName(s, rng))
+  return generateSemitoneDistractors(correctSemitones, count, allowedSemitones, rng).map((s) =>
+    randomIntervalName(s, rng),
+  )
 }
 
 /**
@@ -57,7 +63,7 @@ export function generateShapeDistractors(
   correctSemitones: number,
   count: number,
   shapeOptions: Pick<ShapeGenerationOptions, 'tuning' | 'allowedRootStrings' | 'allowedStringPairs' | 'maxFretSpan'>,
-  semitoneRange: [number, number],
+  allowedSemitones: number[],
   rng: () => number = Math.random,
 ): GeneratedShape[] {
   const results: GeneratedShape[] = []
@@ -67,7 +73,7 @@ export function generateShapeDistractors(
   for (let attempt = 0; attempt < maxAttempts && results.length < count; attempt++) {
     let shape: GeneratedShape
     try {
-      shape = generateShape({ ...shapeOptions, semitoneRange, rng })
+      shape = generateShape({ ...shapeOptions, allowedSemitones, rng })
     } catch {
       continue
     }

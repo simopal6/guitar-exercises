@@ -23,7 +23,9 @@ export function computeInterval(tuning: Tuning, rootPosition: FretPosition, targ
   return semitoneDistance(tuning, rootPosition, targetPosition)
 }
 
-const DEFAULT_SEMITONE_RANGE: [number, number] = [0, 12]
+// Full theoretical range (0-12, Unison included) — this is a pure theory
+// default, independent of any app-level decision to exclude an interval.
+const DEFAULT_ALLOWED_SEMITONES = Array.from({ length: 13 }, (_, i) => i)
 const DEFAULT_MAX_FRET_SPAN = 4
 const DEFAULT_ROOT_FRET_RANGE: [number, number] = [0, 12]
 const MAX_NECK_FRET = 20
@@ -35,7 +37,8 @@ export interface ShapeGenerationOptions {
   allowedRootStrings: number[]
   /** Restrict which [rootString, targetString] combinations may be generated. Overrides free target-string pick. */
   allowedStringPairs?: Array<[number, number]>
-  semitoneRange?: [number, number]
+  /** Semitone counts eligible to be drawn — an explicit set, not necessarily contiguous. */
+  allowedSemitones?: number[]
   maxFretSpan?: number
   rootFretRange?: [number, number]
   rng?: () => number
@@ -80,18 +83,17 @@ export function generateShape(opts: ShapeGenerationOptions): GeneratedShape {
     tuning,
     allowedRootStrings,
     allowedStringPairs,
-    semitoneRange = DEFAULT_SEMITONE_RANGE,
+    allowedSemitones = DEFAULT_ALLOWED_SEMITONES,
     maxFretSpan = DEFAULT_MAX_FRET_SPAN,
     rootFretRange = DEFAULT_ROOT_FRET_RANGE,
     rng = Math.random,
   } = opts
 
-  const [minSemitones, maxSemitones] = semitoneRange
   const [minRootFret, maxRootFret] = rootFretRange
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const [rootString, targetString] = pickStringPair(tuning, allowedRootStrings, allowedStringPairs, rng)
-    const semitones = randomInt(rng, minSemitones, maxSemitones)
+    const semitones = allowedSemitones[randomInt(rng, 0, allowedSemitones.length - 1)]
     const rootPosition: FretPosition = { stringIndex: rootString, fret: randomInt(rng, minRootFret, maxRootFret) }
     const targetPosition = computeTargetPosition(tuning, rootPosition, semitones, targetString)
 

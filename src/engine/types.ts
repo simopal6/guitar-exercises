@@ -40,5 +40,4 @@ export interface DifficultyLevel {
   allowedRootStrings: number[]
   allowedStringPairs?: Array<[number, number]>
   maxFretSpan?: number
-  semitoneRange?: [number, number]
 }

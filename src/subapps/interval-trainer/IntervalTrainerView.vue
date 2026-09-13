@@ -11,6 +11,9 @@ const {
   difficultyId,
   durationSeconds,
   usesShape,
+  intervalPreset,
+  standardSemitones,
+  canStart,
   phase,
   remainingSeconds,
   score,
@@ -22,6 +25,9 @@ const {
   setMode,
   setDifficulty,
   setDuration,
+  setIntervalPreset,
+  toggleStandardSemitone,
+  resetStandardSemitones,
   start,
   answer,
   reset,
@@ -64,9 +70,15 @@ function formatTime(totalSeconds: number): string {
       :duration-seconds="durationSeconds"
       :uses-shape="usesShape"
       :best-score="bestScore"
+      :interval-preset="intervalPreset"
+      :standard-semitones="standardSemitones"
+      :can-start="canStart"
       @set-mode="setMode"
       @set-difficulty="setDifficulty"
       @set-duration="setDuration"
+      @set-interval-preset="setIntervalPreset"
+      @toggle-standard-semitone="toggleStandardSemitone"
+      @reset-standard-semitones="resetStandardSemitones"
       @start="start"
     />
 
