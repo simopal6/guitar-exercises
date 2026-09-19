@@ -45,11 +45,12 @@ export function generateNameDistractors(
   correct: IntervalName,
   count: number,
   allowedSemitones: number[],
+  nameSelector: (semitones: number, rng: () => number) => IntervalName = randomIntervalName,
   rng: () => number = Math.random,
 ): IntervalName[] {
   const correctSemitones = intervalSemitones(correct)
   return generateSemitoneDistractors(correctSemitones, count, allowedSemitones, rng).map((s) =>
-    randomIntervalName(s, rng),
+    nameSelector(s, rng),
   )
 }
 
@@ -64,6 +65,7 @@ export function generateShapeDistractors(
   count: number,
   shapeOptions: Pick<ShapeGenerationOptions, 'tuning' | 'allowedRootStrings' | 'allowedStringPairs' | 'maxFretSpan'>,
   allowedSemitones: number[],
+  nameSelector: (semitones: number, rng: () => number) => IntervalName = randomIntervalName,
   rng: () => number = Math.random,
 ): GeneratedShape[] {
   const results: GeneratedShape[] = []
@@ -73,7 +75,7 @@ export function generateShapeDistractors(
   for (let attempt = 0; attempt < maxAttempts && results.length < count; attempt++) {
     let shape: GeneratedShape
     try {
-      shape = generateShape({ ...shapeOptions, allowedSemitones, rng })
+      shape = generateShape({ ...shapeOptions, allowedSemitones, nameSelector, rng })
     } catch {
       continue
     }

@@ -1,12 +1,12 @@
 import type { GeneratedShape, IntervalName } from '../../theory'
-import { STANDARD_TUNING, generateShape, randomIntervalName } from '../../theory'
+import { STANDARD_TUNING, generateShape } from '../../theory'
 import {
   generateNameDistractors,
   generateSemitoneDistractors,
   generateShapeDistractors,
   shuffle,
 } from '../distractors'
-import type { DifficultyLevel, ExerciseFace, FaceValue, ModeConfig, Question } from '../types'
+import type { DifficultyLevel, ExerciseFace, FaceValue, ModeConfig, NameSelector, Question } from '../types'
 
 const ALL_STRINGS = [0, 1, 2, 3, 4, 5]
 
@@ -27,6 +27,7 @@ export function generateIntervalQuestion(
   mode: ModeConfig,
   difficulty: DifficultyLevel | null,
   allowedSemitones: number[],
+  nameSelector: NameSelector,
   rng: () => number,
 ): Question {
   const usesShape = mode.questionFace === 'shape' || mode.answerFace === 'shape'
@@ -45,12 +46,12 @@ export function generateIntervalQuestion(
     // Let generateShape pick semitones freely within the allowed set: some
     // exact values can be geometrically unreachable for a given difficulty,
     // so we never force a single point here.
-    correctShape = generateShape({ ...shapeOptions, allowedSemitones, rng })
+    correctShape = generateShape({ ...shapeOptions, allowedSemitones, nameSelector, rng })
     semitones = correctShape.semitones
     name = correctShape.intervalName
   } else {
     semitones = allowedSemitones[Math.floor(rng() * allowedSemitones.length)]
-    name = randomIntervalName(semitones, rng)
+    name = nameSelector(semitones, rng)
   }
 
   const swap = Boolean(mode.randomizeDirection) && rng() < 0.5
@@ -71,7 +72,7 @@ export function generateIntervalQuestion(
 
   let distractors: FaceValue[]
   if (answerFace === 'name') {
-    distractors = generateNameDistractors(name, distractorCount, allowedSemitones, rng).map(
+    distractors = generateNameDistractors(name, distractorCount, allowedSemitones, nameSelector, rng).map(
       (value) => ({ face: 'name', value }) as const,
     )
   } else if (answerFace === 'semitones') {
@@ -79,9 +80,14 @@ export function generateIntervalQuestion(
       (value) => ({ face: 'semitones', value }) as const,
     )
   } else {
-    distractors = generateShapeDistractors(semitones, distractorCount, shapeOptions, allowedSemitones, rng).map(
-      (value) => ({ face: 'shape', value }) as const,
-    )
+    distractors = generateShapeDistractors(
+      semitones,
+      distractorCount,
+      shapeOptions,
+      allowedSemitones,
+      nameSelector,
+      rng,
+    ).map((value) => ({ face: 'shape', value }) as const)
   }
 
   const choices = shuffle([correctAnswer, ...distractors], rng)

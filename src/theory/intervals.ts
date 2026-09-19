@@ -5,7 +5,7 @@
  * semitones).
  */
 export type IntervalName =
-  | 'Unison'
+  | 'Perfect Unison'
   | 'Diminished Second'
   | 'Minor Second'
   | 'Augmented Unison'
@@ -30,7 +30,7 @@ export type IntervalName =
   | 'Augmented Sixth'
   | 'Major Seventh'
   | 'Diminished Octave'
-  | 'Octave'
+  | 'Perfect Octave'
   | 'Augmented Seventh'
 
 /**
@@ -38,7 +38,7 @@ export type IntervalName =
  * count. The canonical (major/minor/perfect) name comes first in each group.
  */
 export const INTERVAL_NAME_GROUPS: readonly (readonly IntervalName[])[] = [
-  ['Unison', 'Diminished Second'],
+  ['Perfect Unison', 'Diminished Second'],
   ['Minor Second', 'Augmented Unison'],
   ['Major Second', 'Diminished Third'],
   ['Minor Third', 'Augmented Second'],
@@ -50,7 +50,7 @@ export const INTERVAL_NAME_GROUPS: readonly (readonly IntervalName[])[] = [
   ['Major Sixth', 'Diminished Seventh'],
   ['Minor Seventh', 'Augmented Sixth'],
   ['Major Seventh', 'Diminished Octave'],
-  ['Octave', 'Augmented Seventh'],
+  ['Perfect Octave', 'Augmented Seventh'],
 ]
 
 function assertValidSemitones(semitones: number): void {

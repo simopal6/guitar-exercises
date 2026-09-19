@@ -39,6 +39,8 @@ export interface ShapeGenerationOptions {
   allowedStringPairs?: Array<[number, number]>
   /** Semitone counts eligible to be drawn — an explicit set, not necessarily contiguous. */
   allowedSemitones?: number[]
+  /** Picks the name for a drawn semitone count — defaults to the full enharmonic-variant behavior. */
+  nameSelector?: (semitones: number, rng: () => number) => IntervalName
   maxFretSpan?: number
   rootFretRange?: [number, number]
   rng?: () => number
@@ -84,6 +86,7 @@ export function generateShape(opts: ShapeGenerationOptions): GeneratedShape {
     allowedRootStrings,
     allowedStringPairs,
     allowedSemitones = DEFAULT_ALLOWED_SEMITONES,
+    nameSelector = randomIntervalName,
     maxFretSpan = DEFAULT_MAX_FRET_SPAN,
     rootFretRange = DEFAULT_ROOT_FRET_RANGE,
     rng = Math.random,
@@ -103,7 +106,7 @@ export function generateShape(opts: ShapeGenerationOptions): GeneratedShape {
       Math.abs(targetPosition.fret - rootPosition.fret) <= maxFretSpan
 
     if (playable) {
-      return { rootPosition, targetPosition, semitones, intervalName: randomIntervalName(semitones, rng) }
+      return { rootPosition, targetPosition, semitones, intervalName: nameSelector(semitones, rng) }
     }
   }
 

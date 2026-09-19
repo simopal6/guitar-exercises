@@ -20,9 +20,9 @@ function seededRng(seed: number): () => number {
 
 describe('intervals', () => {
   it('names the boundary intervals with their canonical name', () => {
-    expect(intervalName(0)).toBe('Unison')
+    expect(intervalName(0)).toBe('Perfect Unison')
     expect(intervalName(6)).toBe('Tritone')
-    expect(intervalName(12)).toBe('Octave')
+    expect(intervalName(12)).toBe('Perfect Octave')
   })
 
   it('round-trips canonical name <-> semitones for every simple interval', () => {

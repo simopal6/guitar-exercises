@@ -3,6 +3,7 @@ import { createExerciseEngine } from '../../../engine/engine'
 import { DIFFICULTY_LEVELS } from '../../../engine/difficulty'
 import { MODE_CONFIGS } from '../../../engine/modes'
 import type { Question } from '../../../engine/types'
+import { intervalName, randomIntervalName } from '../../../theory'
 import { getBestScore, recordScore } from '../bestScore'
 import {
   COMPLETE_SEMITONES,
@@ -42,7 +43,13 @@ export function useIntervalExercise() {
     intervalPreset.value === 'completa' ? COMPLETE_SEMITONES : standardSemitones.value,
   )
   const canStart = computed(() => activeSemitones.value.length >= MIN_SELECTED_SEMITONES)
-  const engine = computed(() => createExerciseEngine(mode.value, difficulty.value, activeSemitones.value))
+  // Standard: one fixed canonical name per interval. Completa: the full set
+  // of enharmonic variants, as before — this is the naming half of the
+  // interval-selection preset, orthogonal to which semitones are allowed.
+  const nameSelector = computed(() => (intervalPreset.value === 'completa' ? randomIntervalName : intervalName))
+  const engine = computed(() =>
+    createExerciseEngine(mode.value, difficulty.value, activeSemitones.value, nameSelector.value),
+  )
 
   const phase = ref<SessionPhase>('setup')
   const remainingSeconds = ref(durationSeconds.value)

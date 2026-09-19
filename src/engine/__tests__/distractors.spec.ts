@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { generateNameDistractors, generateSemitoneDistractors, generateShapeDistractors } from '../distractors'
-import { INTERVAL_NAME_GROUPS, STANDARD_TUNING } from '../../theory'
+import { INTERVAL_NAME_GROUPS, STANDARD_TUNING, intervalName, intervalSemitones, randomIntervalName } from '../../theory'
 
 function seededRng(seed: number): () => number {
   let state = seed
@@ -53,9 +53,9 @@ describe('distractors', () => {
     }
   })
 
-  it('generates unique name distractors, allowing augmented/diminished variants', () => {
+  it('generates unique name distractors, allowing augmented/diminished variants (Completa: randomIntervalName)', () => {
     const rng = seededRng(2)
-    const distractors = generateNameDistractors('Major Third', 3, ALL_SEMITONES, rng)
+    const distractors = generateNameDistractors('Major Third', 3, ALL_SEMITONES, randomIntervalName, rng)
     expect(distractors).toHaveLength(3)
     expect(new Set(distractors).size).toBe(3)
     expect(distractors).not.toContain('Major Third')
@@ -65,12 +65,23 @@ describe('distractors', () => {
     }
   })
 
-  it('never picks a distractor name equivalent to the correct answer (e.g. Augmented Second for Minor Third)', () => {
+  it('never picks a distractor whose semitone count equals the correct answer', () => {
     const rng = seededRng(5)
     for (let i = 0; i < 50; i++) {
-      const distractors = generateNameDistractors('Minor Third', 3, ALL_SEMITONES, rng)
-      expect(distractors).not.toContain('Minor Third')
-      expect(distractors).not.toContain('Augmented Second')
+      const distractors = generateNameDistractors('Minor Third', 3, ALL_SEMITONES, randomIntervalName, rng)
+      for (const d of distractors) {
+        expect(intervalSemitones(d)).not.toBe(3)
+      }
+    }
+  })
+
+  it('with nameSelector: intervalName (Standard), every distractor is the exact canonical name — never a variant', () => {
+    const rng = seededRng(17)
+    for (let i = 0; i < 50; i++) {
+      const distractors = generateNameDistractors('Minor Third', 3, ALL_SEMITONES, intervalName, rng)
+      for (const d of distractors) {
+        expect(d).toBe(intervalName(intervalSemitones(d)))
+      }
     }
   })
 
@@ -80,7 +91,7 @@ describe('distractors', () => {
     it('finds distinct playable shape distractors, none matching the correct semitone count', () => {
       const rng = seededRng(6)
       for (let i = 0; i < 30; i++) {
-        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, rng)
+        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, randomIntervalName, rng)
         expect(distractors).toHaveLength(3)
         const semitonesUsed = distractors.map((d) => d.semitones)
         expect(new Set(semitonesUsed).size).toBe(3)
@@ -96,7 +107,7 @@ describe('distractors', () => {
     it('never returns the geometrically-unreachable Unison at beginner difficulty', () => {
       const rng = seededRng(7)
       for (let i = 0; i < 30; i++) {
-        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, rng)
+        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, randomIntervalName, rng)
         expect(distractors.map((d) => d.semitones)).not.toContain(0)
       }
     })
@@ -105,10 +116,20 @@ describe('distractors', () => {
       const rng = seededRng(13)
       const restricted = [3, 4, 5, 7]
       for (let i = 0; i < 30; i++) {
-        const distractors = generateShapeDistractors(3, 3, beginnerOptions, restricted, rng)
+        const distractors = generateShapeDistractors(3, 3, beginnerOptions, restricted, randomIntervalName, rng)
         expect(distractors).toHaveLength(3)
         for (const shape of distractors) {
           expect(restricted).toContain(shape.semitones)
+        }
+      }
+    })
+
+    it('with nameSelector: intervalName, every distractor shape carries the exact canonical name', () => {
+      const rng = seededRng(19)
+      for (let i = 0; i < 30; i++) {
+        const distractors = generateShapeDistractors(4, 3, beginnerOptions, FULL_RANGE_WITH_UNISON, intervalName, rng)
+        for (const shape of distractors) {
+          expect(shape.intervalName).toBe(intervalName(shape.semitones))
         }
       }
     })

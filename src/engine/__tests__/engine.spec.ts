@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createExerciseEngine } from '../engine'
 import { MODE_CONFIGS } from '../modes'
-import { intervalName, intervalSemitones } from '../../theory'
+import { intervalName, intervalSemitones, randomIntervalName } from '../../theory'
 
 function seededRng(seed: number): () => number {
   let state = seed
@@ -18,7 +18,7 @@ const ALL_SEMITONES = Array.from({ length: 12 }, (_, i) => i + 1) // 1-12, the a
 
 describe('createExerciseEngine (name-semitones)', () => {
   it('produces well-formed questions with exactly one correct choice among 4', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, seededRng(3))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, randomIntervalName, seededRng(3))
     for (let i = 0; i < 100; i++) {
       const q = engine.nextQuestion()
       expect(q.choices).toHaveLength(4)
@@ -42,7 +42,7 @@ describe('createExerciseEngine (name-semitones)', () => {
   })
 
   it('validates answers against the recorded correct index', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, seededRng(4))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, randomIntervalName, seededRng(4))
     const q = engine.nextQuestion()
     expect(engine.submitAnswer(q, q.correctIndex)).toEqual({ correct: true, correctIndex: q.correctIndex })
     const wrongIndex = (q.correctIndex + 1) % q.choices.length

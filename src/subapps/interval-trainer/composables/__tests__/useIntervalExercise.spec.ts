@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { intervalName, intervalSemitones } from '../../../../theory'
 import { useIntervalExercise } from '../useIntervalExercise'
 
 // Mounts the composable inside a real component instance so onUnmounted has
@@ -274,6 +275,42 @@ describe('useIntervalExercise', () => {
       result.setIntervalPreset('completa')
       await nextTick()
       expect(result.bestScore.value).toBe(0) // completa preset has no record yet, despite standard's record existing
+    })
+
+    it('standard preset only ever shows the canonical name, never an enharmonic variant', () => {
+      const { result } = withSetup(useIntervalExercise)
+      result.setMode('name-semitones')
+      result.start()
+      for (let i = 0; i < 100; i++) {
+        const q = result.currentQuestion.value!
+        expect(q.intervalName).toBe(intervalName(q.semitones))
+        for (const choice of q.choices) {
+          if (choice.face === 'name') expect(choice.value).toBe(intervalName(intervalSemitones(choice.value)))
+        }
+        result.answer(0)
+        vi.advanceTimersByTime(2500)
+      }
+    })
+
+    it('completa preset still shows more than one spelling for the same semitone count', () => {
+      const { result } = withSetup(useIntervalExercise)
+      result.setMode('name-semitones')
+      result.setIntervalPreset('completa')
+      result.start()
+      const namesSeenPerSemitone = new Map<number, Set<string>>()
+      for (let i = 0; i < 150; i++) {
+        const q = result.currentQuestion.value!
+        for (const face of [q.prompt, ...q.choices]) {
+          if (face.face !== 'name') continue
+          const semitones = intervalSemitones(face.value)
+          const seen = namesSeenPerSemitone.get(semitones) ?? new Set<string>()
+          seen.add(face.value)
+          namesSeenPerSemitone.set(semitones, seen)
+        }
+        result.answer(0)
+        vi.advanceTimersByTime(2500)
+      }
+      expect([...namesSeenPerSemitone.values()].some((names) => names.size > 1)).toBe(true)
     })
   })
 })
