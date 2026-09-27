@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { DIFFICULTY_LEVELS } from '../../../engine/difficulty'
 import { DURATIONS } from '../composables/useIntervalExercise'
 import IntervalSelector from './IntervalSelector.vue'
 import type { IntervalPreset } from '../selectedIntervalsStore'
 
 defineProps<{
   modeId: string
-  difficultyId: number
   durationSeconds: number
-  usesShape: boolean
   bestScore: number
   intervalPreset: IntervalPreset
   standardSemitones: number[]
@@ -17,7 +14,6 @@ defineProps<{
 
 const emit = defineEmits<{
   'set-mode': [id: string]
-  'set-difficulty': [id: number]
   'set-duration': [seconds: number]
   'set-interval-preset': [preset: IntervalPreset]
   'toggle-standard-semitone': [semitones: number]
@@ -34,7 +30,6 @@ const MODE_IDS = Object.keys(MODE_LABELS)
 
 const PILL_COLORS = {
   indigo: 'border-indigo-500 bg-indigo-500 text-white',
-  emerald: 'border-emerald-500 bg-emerald-500 text-white',
   amber: 'border-amber-500 bg-amber-500 text-white',
 } as const
 
@@ -71,22 +66,6 @@ function pillClass(active: boolean, activeColor: keyof typeof PILL_COLORS): stri
       @toggle-standard-semitone="emit('toggle-standard-semitone', $event)"
       @reset-standard-semitones="emit('reset-standard-semitones')"
     />
-
-    <div v-if="usesShape">
-      <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Difficoltà</p>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="level in DIFFICULTY_LEVELS"
-          :key="level.id"
-          type="button"
-          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="pillClass(level.id === difficultyId, 'emerald')"
-          @click="emit('set-difficulty', level.id)"
-        >
-          {{ level.label }}
-        </button>
-      </div>
-    </div>
 
     <div>
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Durata</p>

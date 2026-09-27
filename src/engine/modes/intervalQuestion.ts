@@ -6,7 +6,7 @@ import {
   generateShapeDistractors,
   shuffle,
 } from '../distractors'
-import type { DifficultyLevel, ExerciseFace, FaceValue, ModeConfig, NameSelector, Question } from '../types'
+import type { ExerciseFace, FaceValue, ModeConfig, NameSelector, Question } from '../types'
 
 const ALL_STRINGS = [0, 1, 2, 3, 4, 5]
 
@@ -25,17 +25,17 @@ function requireShape(shape: GeneratedShape | null): GeneratedShape {
  */
 export function generateIntervalQuestion(
   mode: ModeConfig,
-  difficulty: DifficultyLevel | null,
   allowedSemitones: number[],
   nameSelector: NameSelector,
   rng: () => number,
 ): Question {
   const usesShape = mode.questionFace === 'shape' || mode.answerFace === 'shape'
+  // Root and target may land on any of the 6 strings — no restriction, so
+  // shapes crossing the B string (index 4, the odd major-third gap) show up
+  // just as often as any other.
   const shapeOptions = {
     tuning: STANDARD_TUNING,
-    allowedRootStrings: difficulty?.allowedRootStrings ?? ALL_STRINGS,
-    allowedStringPairs: difficulty?.allowedStringPairs,
-    maxFretSpan: difficulty?.maxFretSpan,
+    allowedRootStrings: ALL_STRINGS,
   }
 
   let semitones: number
@@ -44,8 +44,8 @@ export function generateIntervalQuestion(
 
   if (usesShape) {
     // Let generateShape pick semitones freely within the allowed set: some
-    // exact values can be geometrically unreachable for a given difficulty,
-    // so we never force a single point here.
+    // exact values can be geometrically unreachable (e.g. too far apart to
+    // fit within the fret span), so we never force a single point here.
     correctShape = generateShape({ ...shapeOptions, allowedSemitones, nameSelector, rng })
     semitones = correctShape.semitones
     name = correctShape.intervalName

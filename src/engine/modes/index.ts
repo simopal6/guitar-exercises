@@ -1,9 +1,8 @@
-import type { DifficultyLevel, ModeConfig, NameSelector, Question } from '../types'
+import type { ModeConfig, NameSelector, Question } from '../types'
 import { generateIntervalQuestion } from './intervalQuestion'
 
 export type QuestionGenerator = (
   mode: ModeConfig,
-  difficulty: DifficultyLevel | null,
   allowedSemitones: number[],
   nameSelector: NameSelector,
   rng: () => number,

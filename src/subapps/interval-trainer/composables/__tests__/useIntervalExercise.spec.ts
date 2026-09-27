@@ -145,7 +145,7 @@ describe('useIntervalExercise', () => {
     expect(result.isNewBest.value).toBe(false)
   })
 
-  it('setMode/setDifficulty/setDuration are no-ops once the session has started', () => {
+  it('setMode/setDuration are no-ops once the session has started', () => {
     const { result } = withSetup(useIntervalExercise)
     result.start()
     result.setMode('semitones-shape')
@@ -154,7 +154,7 @@ describe('useIntervalExercise', () => {
     expect(result.durationSeconds.value).toBe(60)
   })
 
-  it('bestScore reflects the (duration, mode, difficulty) combination, not just the latest session', () => {
+  it('bestScore reflects the (duration, mode) combination, not just the latest session', () => {
     const { result: session1 } = withSetup(useIntervalExercise)
     session1.setDuration(180)
     session1.start()

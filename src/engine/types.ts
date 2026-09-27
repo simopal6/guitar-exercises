@@ -41,12 +41,3 @@ export interface Question {
   choices: FaceValue[]
   correctIndex: number
 }
-
-export interface DifficultyLevel {
-  id: number
-  label: string
-  /** Strings the root (lower) note may sit on — the "anchored root" constraint for early levels. */
-  allowedRootStrings: number[]
-  allowedStringPairs?: Array<[number, number]>
-  maxFretSpan?: number
-}

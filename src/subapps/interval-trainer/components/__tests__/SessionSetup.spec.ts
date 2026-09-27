@@ -4,9 +4,7 @@ import SessionSetup from '../SessionSetup.vue'
 
 const baseProps = {
   modeId: 'name-semitones',
-  difficultyId: 1,
   durationSeconds: 60,
-  usesShape: false,
   bestScore: 7,
   intervalPreset: 'standard' as const,
   standardSemitones: [3, 4, 5, 7, 9, 10, 11, 12],
@@ -14,21 +12,14 @@ const baseProps = {
 }
 
 describe('SessionSetup', () => {
-  it('shows the mode and duration pills but hides difficulty when usesShape is false', () => {
+  it('shows the mode and duration pills', () => {
     const wrapper = mount(SessionSetup, { props: baseProps })
     expect(wrapper.text()).toContain('Nome ↔ Semitoni')
     expect(wrapper.text()).toContain('1 minuto')
     expect(wrapper.text()).toContain('3 minuti')
-    expect(wrapper.text()).not.toContain('Difficoltà')
   })
 
-  it('shows difficulty pills when usesShape is true', () => {
-    const wrapper = mount(SessionSetup, { props: { ...baseProps, usesShape: true } })
-    expect(wrapper.text()).toContain('Difficoltà')
-    expect(wrapper.text()).toContain('Principiante')
-  })
-
-  it('always shows the interval selector, regardless of usesShape', () => {
+  it('always shows the interval selector', () => {
     const wrapper = mount(SessionSetup, { props: baseProps })
     expect(wrapper.text()).toContain('Intervalli')
     expect(wrapper.text()).toContain('Standard')

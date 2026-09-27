@@ -1,6 +1,6 @@
 import { randomIntervalName } from '../theory'
 import { MODE_GENERATORS } from './modes'
-import type { DifficultyLevel, ModeConfig, NameSelector, Question } from './types'
+import type { ModeConfig, NameSelector, Question } from './types'
 
 export interface ExerciseEngine {
   nextQuestion(): Question
@@ -9,7 +9,6 @@ export interface ExerciseEngine {
 
 export function createExerciseEngine(
   mode: ModeConfig,
-  difficulty: DifficultyLevel | null = null,
   allowedSemitones: number[] = Array.from({ length: 12 }, (_, i) => i + 1),
   nameSelector: NameSelector = randomIntervalName,
   rng: () => number = Math.random,
@@ -21,7 +20,7 @@ export function createExerciseEngine(
 
   return {
     nextQuestion(): Question {
-      return generator(mode, difficulty, allowedSemitones, nameSelector, rng)
+      return generator(mode, allowedSemitones, nameSelector, rng)
     },
     submitAnswer(question: Question, choiceIndex: number) {
       return { correct: choiceIndex === question.correctIndex, correctIndex: question.correctIndex }

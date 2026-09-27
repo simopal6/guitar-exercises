@@ -8,9 +8,7 @@ import SessionResult from './components/SessionResult.vue'
 
 const {
   modeId,
-  difficultyId,
   durationSeconds,
-  usesShape,
   intervalPreset,
   standardSemitones,
   canStart,
@@ -23,7 +21,6 @@ const {
   selectedIndex,
   answered,
   setMode,
-  setDifficulty,
   setDuration,
   setIntervalPreset,
   toggleStandardSemitone,
@@ -66,15 +63,12 @@ function formatTime(totalSeconds: number): string {
     <SessionSetup
       v-if="phase === 'setup'"
       :mode-id="modeId"
-      :difficulty-id="difficultyId"
       :duration-seconds="durationSeconds"
-      :uses-shape="usesShape"
       :best-score="bestScore"
       :interval-preset="intervalPreset"
       :standard-semitones="standardSemitones"
       :can-start="canStart"
       @set-mode="setMode"
-      @set-difficulty="setDifficulty"
       @set-duration="setDuration"
       @set-interval-preset="setIntervalPreset"
       @toggle-standard-semitone="toggleStandardSemitone"

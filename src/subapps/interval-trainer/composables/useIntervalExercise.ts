@@ -1,6 +1,5 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { createExerciseEngine } from '../../../engine/engine'
-import { DIFFICULTY_LEVELS } from '../../../engine/difficulty'
 import { MODE_CONFIGS } from '../../../engine/modes'
 import type { Question } from '../../../engine/types'
 import { intervalName, randomIntervalName } from '../../../theory'
@@ -31,14 +30,11 @@ export type SessionPhase = 'setup' | 'running' | 'finished'
 
 export function useIntervalExercise() {
   const modeId = ref<string>(MODE_IDS[0])
-  const difficultyId = ref<number>(DIFFICULTY_LEVELS[0].id)
   const durationSeconds = ref<number>(DURATIONS[0].seconds)
   const intervalPreset = ref<IntervalPreset>(getIntervalPreset())
   const standardSemitones = ref<number[]>(getStandardSemitones())
 
   const mode = computed(() => MODE_CONFIGS[modeId.value])
-  const difficulty = computed(() => DIFFICULTY_LEVELS.find((level) => level.id === difficultyId.value) ?? null)
-  const usesShape = computed(() => mode.value.questionFace === 'shape' || mode.value.answerFace === 'shape')
   const activeSemitones = computed(() =>
     intervalPreset.value === 'completa' ? COMPLETE_SEMITONES : standardSemitones.value,
   )
@@ -47,9 +43,7 @@ export function useIntervalExercise() {
   // of enharmonic variants, as before — this is the naming half of the
   // interval-selection preset, orthogonal to which semitones are allowed.
   const nameSelector = computed(() => (intervalPreset.value === 'completa' ? randomIntervalName : intervalName))
-  const engine = computed(() =>
-    createExerciseEngine(mode.value, difficulty.value, activeSemitones.value, nameSelector.value),
-  )
+  const engine = computed(() => createExerciseEngine(mode.value, activeSemitones.value, nameSelector.value))
 
   const phase = ref<SessionPhase>('setup')
   const remainingSeconds = ref(durationSeconds.value)
@@ -64,12 +58,10 @@ export function useIntervalExercise() {
     bestScore.value = getBestScore({
       durationSeconds: durationSeconds.value,
       modeId: modeId.value,
-      difficultyId: difficultyId.value,
-      usesShape: usesShape.value,
       intervalPreset: intervalPreset.value,
     })
   }
-  watch([durationSeconds, modeId, difficultyId, intervalPreset], refreshBestScore, { immediate: true })
+  watch([durationSeconds, modeId, intervalPreset], refreshBestScore, { immediate: true })
 
   const currentQuestion = ref<Question | null>(null)
   const selectedIndex = ref<number | null>(null)
@@ -124,8 +116,6 @@ export function useIntervalExercise() {
       {
         durationSeconds: durationSeconds.value,
         modeId: modeId.value,
-        difficultyId: difficultyId.value,
-        usesShape: usesShape.value,
         intervalPreset: intervalPreset.value,
       },
       score.value,
@@ -155,11 +145,6 @@ export function useIntervalExercise() {
   function setMode(id: string) {
     if (phase.value !== 'setup') return
     modeId.value = id
-  }
-
-  function setDifficulty(id: number) {
-    if (phase.value !== 'setup') return
-    difficultyId.value = id
   }
 
   function setDuration(seconds: number) {
@@ -193,9 +178,7 @@ export function useIntervalExercise() {
 
   return {
     modeId,
-    difficultyId,
     durationSeconds,
-    usesShape,
     intervalPreset,
     standardSemitones,
     canStart,
@@ -208,7 +191,6 @@ export function useIntervalExercise() {
     selectedIndex,
     answered,
     setMode,
-    setDifficulty,
     setDuration,
     setIntervalPreset,
     toggleStandardSemitone,

@@ -4,8 +4,6 @@ import { getBestScore, recordScore } from '../bestScore'
 const BASE = {
   durationSeconds: 60,
   modeId: 'name-semitones',
-  difficultyId: 1,
-  usesShape: false,
   intervalPreset: 'standard' as const,
 }
 
@@ -37,27 +35,17 @@ describe('bestScore', () => {
     expect(result).toEqual({ best: 6, isNewBest: true })
   })
 
-  it('keeps separate records per duration/mode/difficulty combination', () => {
+  it('keeps separate records per duration/mode combination', () => {
     recordScore({ ...BASE, durationSeconds: 60 }, 5)
     recordScore({ ...BASE, durationSeconds: 180 }, 12)
-    recordScore({ ...BASE, modeId: 'name-shape', usesShape: true, difficultyId: 1 }, 3)
-    recordScore({ ...BASE, modeId: 'name-shape', usesShape: true, difficultyId: 2 }, 8)
+    recordScore({ ...BASE, modeId: 'name-shape' }, 3)
 
     expect(getBestScore({ ...BASE, durationSeconds: 60 })).toBe(5)
     expect(getBestScore({ ...BASE, durationSeconds: 180 })).toBe(12)
-    expect(getBestScore({ ...BASE, modeId: 'name-shape', usesShape: true, difficultyId: 1 })).toBe(3)
-    expect(getBestScore({ ...BASE, modeId: 'name-shape', usesShape: true, difficultyId: 2 })).toBe(8)
+    expect(getBestScore({ ...BASE, modeId: 'name-shape' })).toBe(3)
   })
 
-  it('normalizes difficultyId out of the key for modes that do not use shape, avoiding lost scores', () => {
-    // A "dirty" difficultyId left over from a previous shape-mode session
-    // must not fragment the name-semitones record into a different slot.
-    recordScore({ ...BASE, usesShape: false, difficultyId: 1 }, 9)
-    expect(getBestScore({ ...BASE, usesShape: false, difficultyId: 2 })).toBe(9)
-    expect(getBestScore({ ...BASE, usesShape: false, difficultyId: 3 })).toBe(9)
-  })
-
-  it('keeps standard and completa records separate for the same duration/mode/difficulty', () => {
+  it('keeps standard and completa records separate for the same duration/mode', () => {
     recordScore({ ...BASE, intervalPreset: 'standard' }, 5)
     recordScore({ ...BASE, intervalPreset: 'completa' }, 9)
 

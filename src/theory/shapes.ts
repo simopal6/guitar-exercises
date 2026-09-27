@@ -33,7 +33,7 @@ const MAX_ATTEMPTS = 50
 
 export interface ShapeGenerationOptions {
   tuning: Tuning
-  /** Strings the root (lower) note is allowed to sit on — this is what difficulty levels restrict. */
+  /** Strings the root (lower) note is allowed to sit on. */
   allowedRootStrings: number[]
   /** Restrict which [rootString, targetString] combinations may be generated. Overrides free target-string pick. */
   allowedStringPairs?: Array<[number, number]>

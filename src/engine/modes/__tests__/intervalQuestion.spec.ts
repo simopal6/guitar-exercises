@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createExerciseEngine } from '../../engine'
 import { MODE_CONFIGS } from '../index'
-import { DIFFICULTY_LEVELS } from '../../difficulty'
 import { intervalName, intervalSemitones, randomIntervalName } from '../../../theory'
 
 function seededRng(seed: number): () => number {
@@ -16,44 +15,51 @@ function seededRng(seed: number): () => number {
 }
 
 const SHAPE_MODE_IDS = ['name-shape', 'semitones-shape'] as const
-const DIFFICULTIES: Array<(typeof DIFFICULTY_LEVELS)[number] | null> = [null, ...DIFFICULTY_LEVELS]
 const ALL_SEMITONES = Array.from({ length: 12 }, (_, i) => i + 1) // 1-12, the app's default (no Unison)
+const B_STRING_INDEX = 4
 
 describe('generateIntervalQuestion — shape modes', () => {
   // Regression guard for the "unreachable semitone" bug: forcing an exact
   // semitone count onto generateShape can be geometrically impossible for
-  // some difficulty/tuning combos. This must never throw across every mode
-  // x difficulty combination.
+  // some tuning/fret-span combos. This must never throw across many draws.
   for (const modeId of SHAPE_MODE_IDS) {
-    for (const difficulty of DIFFICULTIES) {
-      const label = difficulty?.label ?? 'nessuna difficoltà'
-      it(`never throws for mode "${modeId}" at difficulty "${label}", across many draws`, () => {
-        const engine = createExerciseEngine(MODE_CONFIGS[modeId], difficulty, ALL_SEMITONES, randomIntervalName, seededRng(42))
-        for (let i = 0; i < 200; i++) {
-          expect(() => engine.nextQuestion()).not.toThrow()
-        }
-      })
-    }
+    it(`never throws for mode "${modeId}", across many draws`, () => {
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], ALL_SEMITONES, randomIntervalName, seededRng(42))
+      for (let i = 0; i < 200; i++) {
+        expect(() => engine.nextQuestion()).not.toThrow()
+      }
+    })
   }
 
-  it('respects allowedRootStrings from the difficulty level', () => {
-    const beginner = DIFFICULTY_LEVELS[0]
-    const engine = createExerciseEngine(MODE_CONFIGS['name-shape'], beginner, ALL_SEMITONES, randomIntervalName, seededRng(11))
-    for (let i = 0; i < 100; i++) {
-      const q = engine.nextQuestion()
-      const shapeValue = [q.prompt, ...q.choices].find((f) => f.face === 'shape')
-      expect(shapeValue).toBeDefined()
-      if (shapeValue?.face === 'shape') {
-        expect(beginner.allowedRootStrings).toContain(shapeValue.value.rootPosition.stringIndex)
+  for (const modeId of SHAPE_MODE_IDS) {
+    it(`mode "${modeId}" uses all 6 strings freely, including shapes that cross the B string`, () => {
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], ALL_SEMITONES, randomIntervalName, seededRng(11))
+      const stringsSeen = new Set<number>()
+      let sawBStringInvolved = false
+      for (let i = 0; i < 300; i++) {
+        const q = engine.nextQuestion()
+        const shapeValues = [q.prompt, ...q.choices].filter((f) => f.face === 'shape')
+        for (const shapeValue of shapeValues) {
+          stringsSeen.add(shapeValue.value.rootPosition.stringIndex)
+          stringsSeen.add(shapeValue.value.targetPosition.stringIndex)
+          if (
+            shapeValue.value.rootPosition.stringIndex === B_STRING_INDEX ||
+            shapeValue.value.targetPosition.stringIndex === B_STRING_INDEX
+          ) {
+            sawBStringInvolved = true
+          }
+        }
       }
-    }
-  })
+      expect([...stringsSeen].sort()).toEqual([0, 1, 2, 3, 4, 5])
+      expect(sawBStringInvolved).toBe(true)
+    })
+  }
 
   it('when answer choices are shapes, they have 4 distinct semitone counts', () => {
     // randomizeDirection means answerFace is 'shape' only about half the time
     // (the other half the question itself shows the shape) — only check the
     // invariant when it actually applies, over enough draws to hit both.
-    const engine = createExerciseEngine(MODE_CONFIGS['semitones-shape'], null, ALL_SEMITONES, randomIntervalName, seededRng(13))
+    const engine = createExerciseEngine(MODE_CONFIGS['semitones-shape'], ALL_SEMITONES, randomIntervalName, seededRng(13))
     let shapeAnswerCount = 0
     for (let i = 0; i < 50; i++) {
       const q = engine.nextQuestion()
@@ -68,7 +74,7 @@ describe('generateIntervalQuestion — shape modes', () => {
   })
 
   it('the correct answer choice always matches the question interval, whichever face is shown', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-shape'], null, ALL_SEMITONES, randomIntervalName, seededRng(17))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-shape'], ALL_SEMITONES, randomIntervalName, seededRng(17))
     for (let i = 0; i < 50; i++) {
       const q = engine.nextQuestion()
       const correctChoice = q.choices[q.correctIndex]
@@ -85,7 +91,7 @@ describe('generateIntervalQuestion — shape modes', () => {
   for (const modeId of SHAPE_MODE_IDS) {
     it(`restricts mode "${modeId}" to a custom allowedSemitones set`, () => {
       const restricted = [3, 4, 5, 7]
-      const engine = createExerciseEngine(MODE_CONFIGS[modeId], null, restricted, randomIntervalName, seededRng(37))
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], restricted, randomIntervalName, seededRng(37))
       for (let i = 0; i < 200; i++) {
         const q = engine.nextQuestion()
         expect(restricted).toContain(q.semitones)
@@ -100,7 +106,7 @@ describe('generateIntervalQuestion — shape modes', () => {
 
   for (const modeId of SHAPE_MODE_IDS) {
     it(`never draws Unison for mode "${modeId}", in the question or in any choice`, () => {
-      const engine = createExerciseEngine(MODE_CONFIGS[modeId], null, ALL_SEMITONES, randomIntervalName, seededRng(23))
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], ALL_SEMITONES, randomIntervalName, seededRng(23))
       for (let i = 0; i < 200; i++) {
         const q = engine.nextQuestion()
         expect(q.semitones).not.toBe(0)
@@ -116,7 +122,7 @@ describe('generateIntervalQuestion — shape modes', () => {
 
   for (const modeId of SHAPE_MODE_IDS) {
     it(`with nameSelector: intervalName (Standard), mode "${modeId}" never shows an enharmonic variant`, () => {
-      const engine = createExerciseEngine(MODE_CONFIGS[modeId], null, ALL_SEMITONES, intervalName, seededRng(41))
+      const engine = createExerciseEngine(MODE_CONFIGS[modeId], ALL_SEMITONES, intervalName, seededRng(41))
       for (let i = 0; i < 200; i++) {
         const q = engine.nextQuestion()
         expect(q.intervalName).toBe(intervalName(q.semitones))
@@ -129,7 +135,7 @@ describe('generateIntervalQuestion — shape modes', () => {
   }
 
   it('with nameSelector: randomIntervalName (Completa), name-shape still shows more than one spelling for the same semitone count', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-shape'], null, ALL_SEMITONES, randomIntervalName, seededRng(43))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-shape'], ALL_SEMITONES, randomIntervalName, seededRng(43))
     const namesSeenPerSemitone = new Map<number, Set<string>>()
     for (let i = 0; i < 300; i++) {
       const q = engine.nextQuestion()
@@ -147,7 +153,7 @@ describe('generateIntervalQuestion — shape modes', () => {
 
 describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', () => {
   it('still produces well-formed name<->semitones questions', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, randomIntervalName, seededRng(3))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], ALL_SEMITONES, randomIntervalName, seededRng(3))
     for (let i = 0; i < 50; i++) {
       const q = engine.nextQuestion()
       expect(q.choices).toHaveLength(4)
@@ -157,7 +163,7 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
   })
 
   it('never draws Unison, in the question or in any choice', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, randomIntervalName, seededRng(29))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], ALL_SEMITONES, randomIntervalName, seededRng(29))
     for (let i = 0; i < 200; i++) {
       const q = engine.nextQuestion()
       expect(q.semitones).not.toBe(0)
@@ -171,7 +177,7 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
 
   it('restricts questions and choices to a custom allowedSemitones set', () => {
     const restricted = [3, 4, 5, 7]
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, restricted, randomIntervalName, seededRng(31))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], restricted, randomIntervalName, seededRng(31))
     for (let i = 0; i < 200; i++) {
       const q = engine.nextQuestion()
       expect(restricted).toContain(q.semitones)
@@ -183,7 +189,7 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
   })
 
   it('with nameSelector: intervalName (Standard), never shows an enharmonic variant, in the question or in any choice', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, ALL_SEMITONES, intervalName, seededRng(47))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], ALL_SEMITONES, intervalName, seededRng(47))
     for (let i = 0; i < 200; i++) {
       const q = engine.nextQuestion()
       expect(q.intervalName).toBe(intervalName(q.semitones))
@@ -194,7 +200,7 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
   })
 
   it('with nameSelector: intervalName, the tritone is always exactly "Tritone", never a variant', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, [6, 3, 4, 5], intervalName, seededRng(53))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], [6, 3, 4, 5], intervalName, seededRng(53))
     let sawTritone = false
     for (let i = 0; i < 200; i++) {
       const q = engine.nextQuestion()
@@ -212,7 +218,7 @@ describe('generateIntervalQuestion — name-semitones (unchanged from Fase 1)', 
   })
 
   it('with nameSelector: randomIntervalName (Completa), the tritone can show its variant names too', () => {
-    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], null, [6, 3, 4, 5], randomIntervalName, seededRng(59))
+    const engine = createExerciseEngine(MODE_CONFIGS['name-semitones'], [6, 3, 4, 5], randomIntervalName, seededRng(59))
     const tritoneNamesSeen = new Set<string>()
     for (let i = 0; i < 200; i++) {
       const q = engine.nextQuestion()
