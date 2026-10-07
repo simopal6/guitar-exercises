@@ -5,7 +5,7 @@ import { getAllLists } from './chordListsStore'
 import { purgeLegacyPairTempoFormat } from './chordTempoStore'
 import { seedCagedListIfNeeded } from './seedCaged'
 import PairView from './components/PairView.vue'
-import MetronomeControl from './components/MetronomeControl.vue'
+import MetronomeControl from '../../components/audio/MetronomeControl.vue'
 import ChordListPicker from './components/ChordListPicker.vue'
 import ChordListManager from './components/ChordListManager.vue'
 import ChordFormatHelp from './components/ChordFormatHelp.vue'
@@ -102,7 +102,7 @@ function onSelectList(id: string) {
       <MetronomeControl :bpm="bpm" @adjust="adjustBpm" />
       <button
         type="button"
-        class="text-center text-sm font-medium text-slate-500 underline-offset-2 hover:underline dark:text-slate-400"
+        class="mt-6 border-t border-slate-200 pt-6 text-center text-sm font-medium text-slate-500 underline-offset-2 hover:underline dark:border-slate-800 dark:text-slate-400"
         @click="stop"
       >
         Interrompi esercizio

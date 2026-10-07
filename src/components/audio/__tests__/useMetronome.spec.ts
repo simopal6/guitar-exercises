@@ -13,6 +13,7 @@ vi.mock('tone', () => {
       return this
     }
   }
+  let lastLoop: InstanceType<typeof Loop> | null = null
   class Loop {
     callback: (time: number) => void
     interval: string
@@ -22,6 +23,7 @@ vi.mock('tone', () => {
     constructor(callback: (time: number) => void, interval: string) {
       this.callback = callback
       this.interval = interval
+      lastLoop = this
     }
   }
   return {
@@ -29,6 +31,7 @@ vi.mock('tone', () => {
     Transport,
     MetalSynth,
     Loop,
+    __getLastLoop: () => lastLoop,
   }
 })
 
@@ -81,5 +84,49 @@ describe('useMetronome', () => {
     metronome.dispose()
     expect(Tone.Transport.stop).toHaveBeenCalled()
     expect(metronome.isRunning.value).toBe(false)
+  })
+
+  describe('onBeat', () => {
+    it('calls every subscribed listener on each Loop tick, alongside the click sound', async () => {
+      const Tone = (await import('tone')) as unknown as { __getLastLoop: () => { callback: (t: number) => void } }
+      const metronome = useMetronome(60)
+      await metronome.start()
+      const listener = vi.fn()
+      metronome.onBeat(listener)
+
+      Tone.__getLastLoop().callback(0)
+      Tone.__getLastLoop().callback(1)
+
+      expect(listener).toHaveBeenCalledTimes(2)
+    })
+
+    it('stops notifying a listener once unsubscribed', async () => {
+      const Tone = (await import('tone')) as unknown as { __getLastLoop: () => { callback: (t: number) => void } }
+      const metronome = useMetronome(60)
+      await metronome.start()
+      const listener = vi.fn()
+      const unsubscribe = metronome.onBeat(listener)
+
+      Tone.__getLastLoop().callback(0)
+      unsubscribe()
+      Tone.__getLastLoop().callback(1)
+
+      expect(listener).toHaveBeenCalledTimes(1)
+    })
+
+    it('supports multiple independent listeners', async () => {
+      const Tone = (await import('tone')) as unknown as { __getLastLoop: () => { callback: (t: number) => void } }
+      const metronome = useMetronome(60)
+      await metronome.start()
+      const a = vi.fn()
+      const b = vi.fn()
+      metronome.onBeat(a)
+      metronome.onBeat(b)
+
+      Tone.__getLastLoop().callback(0)
+
+      expect(a).toHaveBeenCalledTimes(1)
+      expect(b).toHaveBeenCalledTimes(1)
+    })
   })
 })

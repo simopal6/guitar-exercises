@@ -8,12 +8,14 @@ export interface Metronome {
   stop(): void
   /** Live change, no restart, no audible glitch — Transport retimes future ticks on its own. */
   setBpm(bpm: number): void
+  /** Subscribe to each click (the same Tone.Loop/Transport driving the audio — not a second clock). Returns an unsubscribe function. */
+  onBeat(callback: () => void): () => void
   dispose(): void
 }
 
 const MIN_BPM = 20 // technical floor only, per spec — no pedagogical minimum/maximum
 
-/** Exported so per-chord tempo persistence (chordTempoStore) stays consistent with what the metronome can actually play. */
+/** Exported so per-item tempo persistence (chordTempoStore, patternTempoStore, ...) stays consistent with what the metronome can actually play. */
 export function clampBpm(bpm: number): number {
   return Math.max(MIN_BPM, Math.round(bpm))
 }
@@ -33,6 +35,7 @@ export function clampBpm(bpm: number): number {
 export function useMetronome(initialBpm: number): Metronome {
   const isRunning = ref(false)
   const bpm = ref(clampBpm(initialBpm))
+  const beatListeners = new Set<() => void>()
 
   let Tone: typeof import('tone') | null = null
   let synth: import('tone').MetalSynth | null = null
@@ -58,6 +61,7 @@ export function useMetronome(initialBpm: number): Metronome {
       // own bpm, so the Loop callback never needs to know the current bpm.
       loop = new Tone.Loop((time) => {
         synth?.triggerAttackRelease('16n', time)
+        for (const listener of beatListeners) listener()
       }, '4n')
     }
     Tone.Transport.bpm.value = bpm.value
@@ -84,6 +88,11 @@ export function useMetronome(initialBpm: number): Metronome {
     if (Tone) Tone.Transport.bpm.value = clamped
   }
 
+  function onBeat(callback: () => void): () => void {
+    beatListeners.add(callback)
+    return () => beatListeners.delete(callback)
+  }
+
   function dispose(): void {
     stop()
     loop?.dispose()
@@ -91,6 +100,7 @@ export function useMetronome(initialBpm: number): Metronome {
     loop = null
     synth = null
     Tone = null
+    beatListeners.clear()
   }
 
   return {
@@ -99,6 +109,7 @@ export function useMetronome(initialBpm: number): Metronome {
     start,
     stop,
     setBpm,
+    onBeat,
     dispose,
   }
 }

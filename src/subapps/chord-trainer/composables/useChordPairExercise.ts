@@ -3,7 +3,7 @@ import { useAudioPlayer } from '../../../components/audio/useAudioPlayer'
 import { useWakeLock } from '../../../composables/useWakeLock'
 import type { Chord, ChordList } from '../chord'
 import { getChordTempo, setChordTempo } from '../chordTempoStore'
-import { clampBpm, useMetronome } from './useMetronome'
+import { clampBpm, useMetronome } from '../../../components/audio/useMetronome'
 
 const TURN_END_NOTE = 'C5'
 const TURN_END_DURATION_SECONDS = 0.3
