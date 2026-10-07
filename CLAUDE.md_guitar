@@ -1,0 +1,350 @@
+# Guitar Theory Trainer — riepilogo per riprendere il lavoro
+
+Questo file esiste perché l'utente ha cambiato account Claude e la nuova
+sessione non avrà memoria della conversazione precedente. Contiene tutto
+quello che serve per riprendere il lavoro senza dover ri-derivare decisioni
+già prese. Non è documentazione utente (per quella vedi `README.md` e
+`CHORDS_FORMAT.md`) — è un brief per un futuro assistente AI.
+
+**Repo**: https://github.com/simopal6/guitar-exercises (remote `origin`, branch `main`)
+**Live**: https://simopal6.github.io/guitar-exercises/
+**Stato al momento di scrivere questo file**: `main` pulito, ultimo commit
+`3087d26` ("Add a reusable useWakeLock composable, wired into the chord trainer").
+
+## Cos'è il progetto
+
+Web app mobile-first (Vue 3 + Vite + TypeScript + Tailwind CSS v4) per
+allenarsi sulla teoria della chitarra. È un contenitore di **sotto-app**
+indipendenti navigabili via tab in basso, che condividono un modulo di
+teoria musicale comune. Nessun backend: tutto client-side, persistenza in
+`localStorage`. Deploy automatico su GitHub Pages ad ogni push su `main`.
+
+L'utente (proprietario del progetto) **non scrive codice lui stesso**: guida
+lo sviluppo a parole, spesso via `/plan`, e legge/rivede quello che viene
+prodotto. Scrive in italiano; l'app e i suoi testi sono in italiano, il
+codice (identificatori, commenti, messaggi di commit) è in inglese.
+
+## Stack e comandi
+
+```
+npm install
+npm run dev         # dev server locale (Vite)
+npm run test         # vitest run (tutta la suite)
+npm run test:watch   # vitest in watch mode
+npm run build         # vue-tsc (type-check) + vite build
+```
+
+- Vue 3 (`<script setup>`, Composition API) + Vite 7 + TypeScript + Tailwind v4
+- Vue Router 4, **hash history** (`createWebHashHistory`, non `createWebHistory`)
+  — GitHub Pages è hosting statico senza rewrite lato server: con history
+  mode un refresh/link diretto su una route non-root darebbe 404.
+- Tone.js per l'audio (metronomo nella sotto-app accordi).
+- Vitest + `@vue/test-utils`, ambiente `jsdom`.
+- **Nessun backend, nessun database**: tutto in `localStorage`.
+
+### Gotcha di versioning da ricordare
+
+`package.json` fissa `"vite": "^7.3.6"` **deliberatamente**, non l'ultima
+versione. `npm create vite@latest` installa Vite 8, che è incompatibile a
+livello di tipi con `vitest@^3.2.7` (conflitto rolldown-vite vs vite
+"classico" — errori di build TS su `vite.config.ts`). Se in futuro si
+aggiorna Vite, verificare prima che `vitest` supporti quella major (o
+aggiornare anche `vitest`).
+
+`vite.config.ts` usa `import { defineConfig } from 'vitest/config'` (non da
+`'vite'`) per avere il campo `test` tipizzato, e imposta
+`base: '/guitar-exercises/'` solo in produzione (path della GitHub Pages
+project page), `'/'` in dev.
+
+## Deploy
+
+`.github/workflows/deploy.yml`: su push a `main`, gira `npm test`,
+`npm run build`, pubblica `dist/` su GitHub Pages via le action ufficiali
+(`actions/configure-pages` + `actions/upload-pages-artifact` +
+`actions/deploy-pages`). Le impostazioni del repo GitHub (Settings → Pages →
+Source → "GitHub Actions") sono **già configurate** — non serve rifarlo.
+
+## Architettura (tre livelli, per capire dove mettere le cose nuove)
+
+```
+src/theory/          Livello 1: teoria musicale pura, ZERO dipendenze UI.
+                      Riusata da OGNI sotto-app. Barrel export in index.ts.
+src/components/       Livello 2: componenti UI riutilizzabili, raggruppati per
+                      tema (fretboard/, audio/).
+src/composables/       Composable condivisi TRASVERSALI a più sotto-app, non
+                      legati a un tema specifico (per ora solo useWakeLock).
+src/engine/            Motore di esercizio generico per la sotto-app intervalli
+                      (domande/risposte come configurazione, non codice nuovo
+                      per ogni modalità).
+src/shell/             Guscio dell'app: TabBar.vue + subapps.ts (registry).
+src/router/            Vue Router, costruito dinamicamente da subapps.ts.
+src/subapps/<nome>/    Ogni sotto-app: cartella propria, composables/ +
+                      components/ interni, registrata in shell/subapps.ts.
+```
+
+Regola pratica: se una cosa è teoria musicale pura (accordatura, note,
+intervalli, calcoli sul manico) → `theory/`. Se è UI riusabile ma legata a un
+tema → `components/<tema>/`. Se è logica riusabile trasversale senza UI →
+`composables/`. Se è specifico di UNA sotto-app → dentro quella sotto-app.
+
+### Convenzione fondamentale da non rompere mai
+
+**Indice di corda 0 = corda più GRAVE** (Mi basso/6ª), indice 5 = corda più
+ACUTA (Mi cantino/1ª). Vale ovunque: `Tuning` (in `theory/tuning.ts`),
+`FretPosition.stringIndex`, l'array `strings`/`fingers` degli accordi. LA
+SOLA ECCEZIONE è `Barre.fromString`/`toString` nel formato accordi, che usa
+la numerazione "da chitarrista" 6..1 (6=Mi basso, 1=Mi cantino) — l'opposto
+come verso E offset di 1. Conversione: `guitarStringNumberToIndex(n) = 6 - n`
+in `subapps/chord-trainer/chord.ts`. Questo disallineamento è voluto
+(rispecchia come gli utenti scrivono davvero i JSON a mano) ed è documentato
+in dettaglio in `CHORDS_FORMAT.md` — ma è un punto facile da sbagliare se si
+tocca di nuovo quel codice.
+
+## Sotto-app esistenti
+
+### 1. Intervalli (`src/subapps/interval-trainer/`)
+
+Allenamento sul riconoscimento di intervalli, tre "facce" (nome inglese ↔
+numero di semitoni ↔ forma sul manico), modalità come configurazione
+(`engine/modes/index.ts`: `name-semitones`, `name-shape`,
+`semitones-shape` — aggiungerne una nuova è una entry di config, non nuovo
+motore). 3 livelli di difficoltà (root ancorato su Mi/La al livello 1, poi
+tutte le corde — `engine/difficulty.ts`). Sessione a tempo (60s/180s,
+configurabile), avanzamento automatico ~1s dopo la risposta, punteggio
+migliore per combinazione (durata, modalità, difficoltà) in `localStorage`
+(`bestScore.ts`), pulsante "Interrompi esercizio" sempre visibile durante la
+sessione (non salva il punteggio parziale).
+
+Usa la `Fretboard.vue` ORIZZONTALE condivisa (`components/fretboard/`,
+corda grave in basso stile TAB) tramite un wrapper `ShapeFretboard.vue` che
+impone una finestra FISSA di 5 tasti (non variabile) così tutte le forme
+hanno lo stesso "zoom" — scelta deliberata sul componente wrapper, non su
+`maxFretSpan` (rimasto a 4 in `theory/shapes.ts`: abbassarlo avrebbe reso la
+Seconda minore irraggiungibile a difficoltà Principiante, non solo
+l'Unisono).
+
+**Non ancora fatto qui** (menzionato ma esplicitamente fuori scope finora):
+modalità "mista", produzione/disegno della forma (solo riconoscimento a
+scelta multipla per ora), inversioni, integrazione del wake lock.
+
+### 2. Accordi (`src/subapps/chord-trainer/`)
+
+Allenamento al cambio tra coppie di accordi da una lista scelta dall'utente,
+con metronomo. Flusso: si sceglie una lista, si configurano durata del
+turno e bpm base, si preme "Inizia" → l'app pesca coppie da un **mazzo
+mescolato** di TUTTE le combinazioni possibili della lista (senza ripetizioni
+fino a esaurimento, poi rimescola), un turno dura N secondi, poi ~2s di
+stacco (il metronomo NON si ferma, continua come conto alla rovescia), poi
+la coppia successiva. Il bpm si regola dal vivo a scatti di 5 ed è
+**una proprietà della coppia** (chiave canonica indipendente dall'ordine,
+`pairTempoStore.ts`, storage `localStorage` SEPARATO da quello di
+liste/accordi apposta perché modificare la forma di un accordo non deve mai
+toccare i tempi salvati). La bpm base si applica solo alle coppie mai viste
+prima.
+
+Metronomo (`composables/useMetronome.ts`): `Tone.Transport` + `Tone.Loop`
+(mai `setInterval`/`setTimeout`, esplicitamente richiesto dall'utente per
+evitare jitter). Il suono del click è passato per 3 iterazioni basate
+sull'ascolto reale dell'utente: `MembraneSynth` su nota bassa (C2, il
+default iniziale) → troppo grave/debole → stessa synth ma nota alta (C6) +
+volume +6dB → poi provato `NoiseSynth` (rumore bianco) → **scelta finale:
+`MetalSynth`** (percussivo metallico tipo hi-hat). Se l'utente chiede ancora
+di cambiare il suono, questa è la storia delle iterazioni già provate.
+
+Lista "CAGED" (5 accordi maggiori aperti C-A-G-E-D) seminata **una tantum**
+al primo caricamento (`seedCaged.ts`, flag dedicato in `localStorage` — non
+ricontrolla mai "lo storage è vuoto?", quindi non risorge se l'utente la
+cancella esplicitamente).
+
+Import liste: **incolla JSON in una textarea + pulsante "Importa"**
+(cambiato da un `<input type="file">` iniziale su richiesta esplicita
+dell'utente). Merge non distruttivo (`chordListsStore.ts`:
+`importChordList`) — accordi con id noto aggiornati, id nuovi aggiunti,
+accordi locali assenti dal file MAI cancellati; la cancellazione è solo un
+gesto esplicito (seleziona+elimina in `ChordListManager.vue`). Schema JSON
+completo, con entrambe le convenzioni di numerazione corde spiegate, in
+`CHORDS_FORMAT.md` (root del repo) — stesso contenuto mostrato anche dentro
+l'app via `ChordFormatHelp.vue` (import Vite `?raw` dello stesso file, una
+sola fonte).
+
+Diagramma accordo (`components/ChordDiagram.vue`): componente NUOVO e
+SEPARATO dalla Fretboard orizzontale — orientamento verticale classico
+(corde in colonne, Mi basso a sinistra, capotasto in alto, X/O sopra le
+corde, pallini con diteggiatura, barré come barretta arrotondata). Finestra
+di 4 tasti ancorata al capotasto (se la forma ci sta) o al tasto più basso
+premuto (con etichetta tipo "5fr") — ancoraggio, non centratura, a
+differenza di `ShapeFretboard`.
+
+Wake lock (`src/composables/useWakeLock.ts`, vedi sotto) integrato SOLO qui
+per ora: richiesta in `start()`, rilascio in `stop()` e nell'`onUnmounted`
+del composable `useChordPairExercise.ts`.
+
+**Non ancora fatto qui**: altre liste pre-costruite oltre CAGED, editor
+grafico di accordi (esplicitamente rifiutato — i JSON si scrivono a
+mano/con AI), selezione di un sottoinsieme di accordi dentro una lista
+(oggi è sempre tutta la lista), audio/strimpellata degli accordi.
+
+## `useWakeLock` (composable condiviso, `src/composables/useWakeLock.ts`)
+
+Impedisce che lo schermo vada in standby durante un esercizio lungo (pensato
+soprattutto per gli accordi, dove si suona la chitarra per minuti senza
+toccare il telefono). API: `{ isActive, request(), release() }`.
+Completamente difensivo: se `'wakeLock' in navigator` è falso, o la
+richiesta fallisce (Safari iOS datati, pagina non visibile, permesso
+negato...), non lancia mai — cattura, logga con `console.warn`, e l'app
+continua identica senza wake lock. Un flag interno (`shouldHold`) traccia
+l'INTENZIONE (true da `request()` a `release()`) e pilota la ri-acquisizione
+automatica su `document.visibilitychange` quando la pagina torna visibile —
+ma solo se l'intenzione è ancora attiva, così un ciclo start/stop ripetuto
+non lascia mai un lock "appeso". **Bug reale trovato e corretto durante lo
+sviluppo**: bisogna azzerare la variabile interna `sentinel` sia quando si
+chiama `release()` sia quando il BROWSER revoca il lock da solo (evento
+nativo `'release'` sul sentinel, es. passaggio in background) — altrimenti
+la ri-acquisizione su `visibilitychange` penserebbe erroneamente che un lock
+sia ancora attivo e non ne richiederebbe uno nuovo.
+
+Integrato SOLO nella sotto-app accordi per ora. È pronto per essere riusato
+in `interval-trainer` (o in future sotto-app) semplicemente componendolo
+allo stesso modo — non richiesto finora, quindi non fatto (l'utente aveva
+detto esplicitamente che voleva un composable riutilizzabile ma
+l'integrazione richiesta era solo per gli accordi).
+
+## Decisioni di design da ricordare (per non ri-derivarle o contraddirle)
+
+- **Nomi note in inglese, solo diesis** (niente bemolle/enarmonia) —
+  `theory/notes.ts`, `NOTE_NAMES`.
+- **Accordatura = 6 altezze MIDI** (corde a vuoto) — cambiare accordatura
+  significa cambiare 6 numeri, nessun'altra modifica. Standard/Drop
+  D/DADGAD già definite in `theory/tuning.ts`.
+- **Nessun caso speciale per la coppia G-B** (unica coppia di corde
+  adiacenti a terza maggiore invece che a quarta in accordatura standard):
+  emerge automaticamente dai numeri dell'accordatura nei calcoli di
+  `theory/shapes.ts`. Se mai si tocca quel codice, un test verifica proprio
+  che questo comportamento resti "emergente" e non hardcoded.
+- **Nomi di intervallo includono le varianti aumentate/diminuite**
+  enarmonicamente equivalenti (es. 3 semitoni = Terza minore O Seconda
+  aumentata), scelte a caso quando mostrate (`randomIntervalName` in
+  `theory/intervals.ts`, `INTERVAL_NAME_GROUPS`).
+- **Le forme degli intervalli non forzano mai un numero di semitoni
+  esatto** su `generateShape` — alcuni valori sono geometricamente
+  irraggiungibili per certe difficoltà/accordature (es. l'Unisono a
+  difficoltà Principiante); si lascia che `generateShape` scelga
+  liberamente dentro un range, il suo retry interno converge da solo su un
+  valore raggiungibile. Bug reale trovato e corretto durante la Fase 2
+  (modalità "forma") — se si tocca di nuovo la generazione di forme,
+  ricontrollare questa proprietà.
+- **Timer di sessione/turno "drift-free"**: `endAt = Date.now() +
+  durata*1000`, ricalcolato ad ogni tick di un `setInterval` invece di
+  decrementare un contatore — sopravvive al throttling dei tab in
+  background senza accumulare errore. Usato sia in interval-trainer
+  (sessione a tempo) sia in chord-trainer (turno/stacco). **Deliberatamente
+  disaccoppiato da `Tone.Transport`**: il Transport gestisce SOLO il click
+  audio a livello musicale, il timer a orologio gestisce SOLO "quanti
+  secondi umani sono passati" — accoppiarli avrebbe richiesto o riavviare il
+  Transport ai confini di turno (glitch udibile) o rendere la durata del
+  turno dipendente dal tempo (contraddice "durata configurabile fissa").
+- **Punteggio migliore (intervalli) chiave normalizzata**: `(durata,
+  modeId, usesShape ? difficultyId : 'na')` — senza normalizzare, un
+  `difficultyId` "sporco" rimasto da una sessione precedente in modalità
+  forma frammenterebbe/nasconderebbe il record legittimo di nome↔semitoni
+  (dove la difficoltà non ha effetto). Bug reale trovato durante la
+  validazione del design, corretto prima di scrivere codice.
+- **Storage accordi denormalizzato**: ogni lista possiede la sua copia
+  completa degli accordi (niente registro globale condiviso). Compromesso
+  accettato consapevolmente: se lo stesso id di accordo compare in più
+  liste e lo si corregge via import, va reimportato in ognuna — rischio
+  reale ma basso, scenario "power user" (id duplicato scritto a mano).
+- **Audio e Wake Lock richiedono un gesto utente genuino**: sia
+  `Tone.start()` (in `useAudioPlayer.ts` e `useMetronome.ts`) sia
+  `navigator.wakeLock.request()` vanno chiamati dentro la stessa catena di
+  chiamate innescata da un click reale (bottone "Inizia" o simili) — mai
+  in un timer o in reazione a un evento non generato dall'utente.
+
+## Limiti dell'ambiente di test/automazione (NON bug dell'app)
+
+Durante lo sviluppo, la verifica in browser è stata fatta con
+`claude-in-chrome` (Chrome controllato via CDP). Due limiti specifici di
+QUESTO ambiente, riscontrati più volte, da NON scambiare per bug reali:
+
+1. **I click generati via CDP non contano come "user activation" genuina**
+   per Chrome (`navigator.userActivation.hasBeenActive` resta `false` anche
+   dopo click sintetici) — questo blocca sia `Tone.start()` (resta pending
+   per sempre) sia `navigator.wakeLock.request()` (rigetta con
+   `NotAllowedError: the requesting page is not visible`). Un utente vero
+   che tocca lo schermo non ha questo problema. Workaround usato per
+   verificare comunque il resto del flusso: patchare temporaneamente
+   `AudioContext.prototype.resume` e/o `navigator.wakeLock.request` via
+   `javascript_exec` per simulare il successo — MAI committare queste
+   patch, sono solo per la sessione di verifica.
+2. **Routing con hash**: navigare direttamente a
+   `http://localhost:PORT/chords` non funziona (ricade sul redirect di
+   default) — serve `http://localhost:PORT/#/chords` (solo la parte dopo
+   `#` viene letta dal router).
+
+## Convenzioni di test
+
+- Test in cartelle `__tests__/` accanto al codice che testano.
+- `vi.useFakeTimers()` per qualunque cosa basata su timer.
+- Pattern `withSetup()` (monta un componente Vue fittizio) per testare
+  composable che usano `onUnmounted` — evita il warning Vue "no active
+  component instance" E permette di testare davvero la pulizia
+  all'unmount. **Attenzione**: se non si smontano esplicitamente i wrapper
+  creati con `withSetup` in un `afterEach`, i listener a livello
+  `document` (es. `visibilitychange`) restano attivi tra un test e l'altro
+  nello stesso file e possono causare falsi positivi/negativi — successo
+  proprio in `useWakeLock.spec.ts` durante lo sviluppo.
+- `Tone.js` mockato con `vi.mock('tone', () => ({ ... }))` (classi finte
+  per `MembraneSynth`/`NoiseSynth`/`MetalSynth`/`Loop`/`Transport`) nei test
+  di composable che lo usano.
+- `navigator.wakeLock` NON esiste in `jsdom` di default: i test che
+  simulano supporto/mancato supporto lo installano/rimuovono con
+  `Object.defineProperty`/`Reflect.deleteProperty`.
+
+## Modo di lavorare con l'utente
+
+- Non scrive codice, guida a parole. Spesso usa `/plan` esplicitamente per
+  cambiamenti non banali; per modifiche piccole e ben specificate (un
+  singolo file, un parametro) va bene implementare direttamente senza tutta
+  la cerimonia di plan-mode.
+- **Vuole i punti ambigui elencati come domande**, non decisi in silenzio —
+  ma per micro-decisioni reversibili (nome di un file, dettaglio estetico)
+  è meglio scegliere con criterio e segnalarlo nel piano, non bloccare su
+  tutto.
+- Per scelte di design importanti, un pass di validazione (Plan agent) prima
+  di scrivere codice ha ripetutamente trovato bug reali prima ancora
+  dell'implementazione (elencati sopra) — vale la pena continuare a farlo
+  per feature non banali.
+- **Non fare mai commit o push senza conferma esplicita** — chiedere sempre
+  dopo aver finito una modifica, anche se sembra ovvio che li vorrà.
+- Per cambiamenti soggettivi (es. suono del metronomo), apprezza iterare
+  "proviamo questa opzione" più volte, ascoltando lui stesso ogni volta
+  (io non posso sentire l'audio) prima di scegliere quella definitiva.
+- Codice ordinato e leggibile, commenti solo dove il PERCHÉ non è ovvio
+  (mai commenti che ripetono cosa fa il codice).
+
+## Cose menzionate ma esplicitamente NON ancora fatte (idee per il futuro)
+
+- Modalità "mista" per l'esercizio intervalli (pesca a caso tra tutte le
+  modalità configurate).
+- Modalità a produzione (disegnare la forma toccando i tasti) per gli
+  intervalli — oggi solo riconoscimento a scelta multipla.
+- Inversioni degli intervalli.
+- Sotto-app di riconoscimento intervalli a orecchio.
+- Sotto-app di ricerca note sul manico.
+- Wake lock integrato anche in interval-trainer.
+- Altre liste di accordi pre-costruite oltre CAGED.
+- Selezione di un sottoinsieme di accordi dentro una lista per una sessione.
+- Audio/strimpellata degli accordi nella sotto-app accordi.
+
+## Convenzione dei messaggi di commit
+
+Corpo multi-riga in inglese con focus sul "perché", chiusura con:
+```
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_...
+```
+(l'id sessione cambierà nella nuova sessione — normale). **Nota tecnica**:
+in questo ambiente, `git commit -m "$(cat <<'EOF' ... EOF)"` ha fallito in
+modo intermittente con errori "unexpected EOF" senza causa chiara
+individuata — workaround usato sistematicamente: scrivere il messaggio in
+un file temporaneo nello scratchpad e fare `git commit -F <file>`.

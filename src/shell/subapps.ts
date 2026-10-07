@@ -27,4 +27,11 @@ export const subApps: SubAppDefinition[] = [
     icon: '🎸',
     component: () => import('../subapps/chord-trainer/ChordTrainerView.vue'),
   },
+  {
+    id: 'scale-trainer',
+    title: 'Scale',
+    path: '/scales',
+    icon: '🪜',
+    component: () => import('../subapps/scale-trainer/ScaleTrainerView.vue'),
+  },
 ]
