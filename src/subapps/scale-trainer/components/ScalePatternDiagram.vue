@@ -8,6 +8,8 @@ const props = defineProps<{
   currentIndex: number | null
   /** The pattern's root fret — anchors the standard 4-fret box, see below. */
   rootFret: number
+  /** Row offset (0-3) of the root within the standard box — see ScalePattern.rootOffsetInBox. */
+  rootOffsetInBox: number
 }>()
 
 const STRING_COUNT = 6
@@ -38,8 +40,10 @@ const CURRENT_STROKE_OPACITY = 1
 // box) looks visibly different from a mistake, not from a shape that keeps
 // resizing. Anchored on the root fret (not on the notes' own min/max): only
 // the root tells us WHICH side is "standard" vs "stretch" when a pattern
-// spans more than 4 frets.
-const standardBoxStart = computed(() => props.rootFret - 1)
+// spans more than 4 frets. Where exactly the root sits within that box
+// (rootOffsetInBox) varies per shape — e.g. root on row 2 vs row 4 — so it
+// comes from the pattern, not a fixed assumption here.
+const standardBoxStart = computed(() => props.rootFret - props.rootOffsetInBox)
 const fretStart = computed(() => Math.max(0, standardBoxStart.value - MARGIN_ROWS))
 const showsNut = computed(() => fretStart.value === 0)
 const positionLabel = computed(() => (showsNut.value ? null : `${standardBoxStart.value}fr`))

@@ -10,6 +10,7 @@ const patternA: ScalePattern = {
   scaleId: MAJOR_SCALE.id,
   label: 'Scala maggiore (1)',
   root: patternARoot,
+  rootOffsetInBox: 1, // root is the box's 2nd fret (box = [2,5] for this root)
   notes: [
     { string: 6, fret: 2 },
     { string: 6, fret: 3 },
@@ -39,10 +40,11 @@ const patternB: ScalePattern = {
   scaleId: MAJOR_SCALE.id,
   label: 'Scala maggiore (2)',
   root: patternBRoot,
-  // [rootFret-2, rootFret+3]: the full 6-fret window the diagram renders
+  rootOffsetInBox: 3, // root is the box's last (4th) fret, bordering the far margin (box = [4,7] for this root)
+  // [boxStart-1, boxStart+4]: the full 6-fret window the diagram renders
   // (4-fret standard box + 1 margin fret on each side), kept in sync so the
-  // whole window is populated instead of leaving the top margin empty.
-  notes: generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, patternBRoot, 5, 10),
+  // whole window is populated instead of leaving a margin empty.
+  notes: generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, patternBRoot, 3, 8),
 }
 
 /** Every pattern the app knows about — add new patterns here as they're written. */

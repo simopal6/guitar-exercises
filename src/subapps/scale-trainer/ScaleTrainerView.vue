@@ -10,6 +10,7 @@ const {
   notes,
   currentNoteIndex,
   rootFret,
+  rootOffsetInBox,
   bpm,
   patternBpmPreview,
   canStart,
@@ -36,7 +37,7 @@ const {
     />
 
     <template v-else>
-      <ScalePatternDiagram :notes="notes" :current-index="currentNoteIndex" :root-fret="rootFret" />
+      <ScalePatternDiagram :notes="notes" :current-index="currentNoteIndex" :root-fret="rootFret" :root-offset-in-box="rootOffsetInBox" />
       <MetronomeControl :bpm="bpm" @adjust="adjustBpm" />
       <button
         type="button"

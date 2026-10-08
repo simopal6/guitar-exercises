@@ -14,6 +14,15 @@ export interface ScalePattern {
   notes: ScalePatternNote[]
   /** Which position is the root — the reference pitch for degree calculation. Not necessarily listed first in `notes`. */
   root: ScalePatternNote
+  /**
+   * Where the root sits within the 4-fret standard box, as a row offset from
+   * the box's lowest fret: 0 = root is the box's first (lowest) fret, 3 =
+   * root is the box's last (highest) fret. This is a property of the shape
+   * itself (which finger naturally lands on the root), NOT something
+   * derivable from the root fret alone — e.g. an "E-shape" box typically has
+   * the root on row 2, while an "A-shape" box has it on row 4.
+   */
+  rootOffsetInBox: number
 }
 
 /**

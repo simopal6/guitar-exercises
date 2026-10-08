@@ -44,6 +44,7 @@ export function useScalePractice() {
 
   const canStart = computed(() => notes.value.length > 0)
   const rootFret = computed(() => selectedPattern.value?.root.fret ?? 0)
+  const rootOffsetInBox = computed(() => selectedPattern.value?.rootOffsetInBox ?? 0)
 
   // Plain ref, refreshed explicitly rather than a computed() over
   // getPatternTempo(): a computed only re-runs when its *reactive* deps
@@ -101,6 +102,7 @@ export function useScalePractice() {
     notes,
     currentNoteIndex,
     rootFret,
+    rootOffsetInBox,
     bpm,
     patternBpmPreview,
     canStart,

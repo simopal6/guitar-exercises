@@ -53,7 +53,11 @@ describe('generateScaleBoxNotes', () => {
   const notes = generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, root, 2, 6)
 
   it('only returns positions whose pitch class actually belongs to the scale', () => {
-    const derived = derivePatternNotes({ id: 'test', scaleId: MAJOR_SCALE.id, label: 'test', root, notes }, MAJOR_SCALE, STANDARD_TUNING)
+    const derived = derivePatternNotes(
+      { id: 'test', scaleId: MAJOR_SCALE.id, label: 'test', root, rootOffsetInBox: 1, notes },
+      MAJOR_SCALE,
+      STANDARD_TUNING,
+    )
     expect(derived.length).toBe(notes.length)
     for (const note of derived) {
       expect(note.degree).toBeGreaterThanOrEqual(1)
