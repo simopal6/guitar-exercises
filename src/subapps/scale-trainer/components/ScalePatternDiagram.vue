@@ -11,21 +11,24 @@ const props = defineProps<{
 }>()
 
 const STRING_COUNT = 6
-const CELL_WIDTH = 28
-const CELL_HEIGHT = 30
-const TOP_MARGIN = 16
+// Sized to fill most of a phone screen's width/height during practice — this
+// is the only diagram on screen at that point, unlike ChordDiagram which
+// cycles through many in sequence.
+const CELL_WIDTH = 48
+const CELL_HEIGHT = 54
+const TOP_MARGIN = 20
 // Wide enough to fit the position label ("10fr" at the widest) without it
 // being clipped by the SVG viewport's left edge — see positionLabel below.
-const SIDE_MARGIN = 26
-const DOT_RADIUS = 9
+const SIDE_MARGIN = 34
+const DOT_RADIUS = 13
 const STANDARD_BOX_SIZE = 4
 const MARGIN_ROWS = 1 // on each side of the standard box
 
 // Border thickness/opacity — the only two values to touch to re-tune how
 // "current note" emphasis reads, independent of the degree fill color.
-const DOT_STROKE_WIDTH = 1.5
+const DOT_STROKE_WIDTH = 2
 const DOT_STROKE_OPACITY = 0.6
-const CURRENT_STROKE_WIDTH = 4.5
+const CURRENT_STROKE_WIDTH = 6
 const CURRENT_STROKE_OPACITY = 1
 
 // Not a fixed zoom level like ChordDiagram (one chord shown at a time, many
@@ -84,6 +87,7 @@ watchEffect(() => {
 </script>
 
 <template>
+  <div class="flex justify-center">
   <svg
     :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
     :style="{ width: `${svgWidth}px`, maxWidth: '100%', height: 'auto' }"
@@ -96,7 +100,7 @@ watchEffect(() => {
       :x="SIDE_MARGIN - 6"
       :y="fretLineY(standardBoxStart - fretStart) + 4"
       text-anchor="end"
-      class="fill-slate-500 dark:fill-slate-400 text-[10px]"
+      class="fill-slate-500 dark:fill-slate-400 text-xs"
     >{{ positionLabel }}</text>
 
     <rect
@@ -106,7 +110,7 @@ watchEffect(() => {
       :y="fretLineY(row)"
       :width="boardWidth"
       :height="CELL_HEIGHT"
-      class="fill-slate-100 dark:fill-slate-800"
+      class="fill-slate-200 dark:fill-slate-700"
     />
 
     <line
@@ -144,4 +148,5 @@ watchEffect(() => {
       :aria-label="note.noteName"
     />
   </svg>
+  </div>
 </template>

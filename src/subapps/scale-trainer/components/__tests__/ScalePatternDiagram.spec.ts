@@ -6,7 +6,7 @@ import { derivePatternNotes } from '../../patternNotes'
 import { PATTERNS } from '../../patterns'
 
 const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')! // root fret 3, no stretch notes
-const patternB = PATTERNS.find((p) => p.id === 'major-a-shape')! // root fret 4, one note stretches below
+const patternB = PATTERNS.find((p) => p.id === 'major-a-shape')! // root fret 5, notes stretch both below and above
 const notesA = derivePatternNotes(patternA, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
 const notesB = derivePatternNotes(patternB, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
 
@@ -106,8 +106,8 @@ describe('ScalePatternDiagram', () => {
     })
 
     it('highlights a note sitting in the margin row exactly like any other current note', () => {
-      // patternB's lowest fret (2) is the stretch note below the standard box [3,6]
-      const stretchIndex = notesB.findIndex((n) => n.fret === 2)
+      // patternB's lowest fret (3) is the stretch note below the standard box [4,7]
+      const stretchIndex = notesB.findIndex((n) => n.fret === 3)
       expect(stretchIndex).toBeGreaterThanOrEqual(0)
       const wrapper = mount(ScalePatternDiagram, { props: { notes: notesB, currentIndex: stretchIndex, rootFret: patternB.root.fret } })
       const circles = wrapper.findAll('circle')
