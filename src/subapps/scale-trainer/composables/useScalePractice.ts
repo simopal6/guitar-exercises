@@ -3,7 +3,8 @@ import { STANDARD_TUNING, SCALES } from '../../../theory'
 import { clampBpm, useMetronome } from '../../../components/audio/useMetronome'
 import { useWakeLock } from '../../../composables/useWakeLock'
 import { PATTERNS } from '../patterns'
-import { derivePatternNotes } from '../patternNotes'
+import { STANDARD_BOX_SIZE } from '../pattern'
+import { derivePatternNotes, dropRedundantMarginNotes } from '../patternNotes'
 import { buildUpDownSequence } from '../sequence'
 import { getPatternTempo, setPatternTempo } from '../patternTempoStore'
 
@@ -33,13 +34,22 @@ export function useScalePractice() {
     if (!pattern) return []
     const scale = SCALES.find((s) => s.id === pattern.scaleId)
     if (!scale) return []
-    return derivePatternNotes(pattern, scale, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
+    const derived = derivePatternNotes(pattern, scale, STANDARD_TUNING)
+    const boxStart = pattern.root.fret - pattern.rootOffsetInBox
+    const boxEnd = boxStart + STANDARD_BOX_SIZE - 1
+    return dropRedundantMarginNotes(derived, boxStart, boxEnd).sort((a, b) => a.midi - b.midi)
   })
 
-  const sequence = computed(() => buildUpDownSequence(notes.value.length))
-  const currentNoteIndex = computed<number | null>(() => {
-    if (notes.value.length === 0) return null
-    return sequence.value[currentStep.value % sequence.value.length] ?? null
+  // Distinct pitches, not notes: two dots can share the same pitch (see
+  // dropRedundantMarginNotes) when a scale tone stretches past the standard
+  // box on two different strings at once — that's still ONE step to the
+  // metronome, highlighting every dot at that pitch together.
+  const distinctMidis = computed(() => [...new Set(notes.value.map((n) => n.midi))])
+  const sequence = computed(() => buildUpDownSequence(distinctMidis.value.length))
+  const currentMidi = computed<number | null>(() => {
+    if (distinctMidis.value.length === 0) return null
+    const index = sequence.value[currentStep.value % sequence.value.length]
+    return index === undefined ? null : (distinctMidis.value[index] ?? null)
   })
 
   const canStart = computed(() => notes.value.length > 0)
@@ -100,7 +110,7 @@ export function useScalePractice() {
     patternId,
     selectedPattern,
     notes,
-    currentNoteIndex,
+    currentMidi,
     rootFret,
     rootOffsetInBox,
     bpm,

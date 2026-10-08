@@ -33,3 +33,16 @@ export function derivePatternNotes(pattern: ScalePattern, scale: Scale, tuning: 
     }
   })
 }
+
+/**
+ * A margin note (outside [boxStart, boxEnd]) is only meant to show a genuine
+ * "stretch" pitch not reachable inside the standard box. Standard guitar
+ * tuning means the same pitch often also appears on another string within
+ * the box — when it does, the margin copy adds nothing but clutter, so it's
+ * dropped (the pitch is already fully represented by its box occurrence).
+ */
+export function dropRedundantMarginNotes(notes: DerivedNote[], boxStart: number, boxEnd: number): DerivedNote[] {
+  const isInBox = (note: DerivedNote) => note.fret >= boxStart && note.fret <= boxEnd
+  const midisInBox = new Set(notes.filter(isInBox).map((note) => note.midi))
+  return notes.filter((note) => isInBox(note) || !midisInBox.has(note.midi))
+}

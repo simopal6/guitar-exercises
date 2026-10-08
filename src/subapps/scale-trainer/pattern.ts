@@ -1,3 +1,6 @@
+/** Number of frets in the "standard" (non-margin) box — shared by the diagram's layout and the margin-note filtering in useScalePractice. */
+export const STANDARD_BOX_SIZE = 4
+
 export interface ScalePatternNote {
   /** Guitarist string number, 6..1 (6 = low E, 1 = high e) — same convention as
    *  Barre.fromString/toString in chord-trainer/chord.ts, so patterns can be

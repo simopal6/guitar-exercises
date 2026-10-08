@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MAJOR_SCALE, STANDARD_TUNING } from '../../../theory'
-import { derivePatternNotes } from '../patternNotes'
+import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
 import type { ScalePatternNote } from '../pattern'
@@ -74,5 +74,58 @@ describe('generateScaleBoxNotes', () => {
 
   it('includes the root position itself', () => {
     expect(notes).toContainEqual(root)
+  })
+})
+
+describe('dropRedundantMarginNotes', () => {
+  function note(partial: Partial<DerivedNote> & Pick<DerivedNote, 'fret' | 'midi'>): DerivedNote {
+    return { stringIndex: 0, noteName: '', degree: 1, color: '#000000', ...partial }
+  }
+
+  it('drops a margin note whose pitch is already present inside the box', () => {
+    const inBox = note({ fret: 5, midi: 60, stringIndex: 1 })
+    const duplicateInMargin = note({ fret: 8, midi: 60, stringIndex: 2 }) // same pitch, outside [4,7]
+    const result = dropRedundantMarginNotes([inBox, duplicateInMargin], 4, 7)
+    expect(result).toEqual([inBox])
+  })
+
+  it('keeps a margin note whose pitch is not reachable inside the box', () => {
+    const inBox = note({ fret: 5, midi: 60 })
+    const genuineStretch = note({ fret: 8, midi: 65 }) // different pitch, a real stretch note
+    const result = dropRedundantMarginNotes([inBox, genuineStretch], 4, 7)
+    expect(result).toEqual([inBox, genuineStretch])
+  })
+
+  it('never drops notes that are inside the box, even if duplicated there', () => {
+    const a = note({ fret: 4, midi: 60, stringIndex: 0 })
+    const b = note({ fret: 6, midi: 60, stringIndex: 1 }) // same pitch, also inside the box
+    const result = dropRedundantMarginNotes([a, b], 4, 7)
+    expect(result).toEqual([a, b])
+  })
+})
+
+describe('major-scale-3 (root on string 6, box touching the nut)', () => {
+  const patternC = PATTERNS.find((p) => p.id === 'major-scale-3')!
+
+  it('generates 19 raw notes, 18 after dropping the one that duplicates an in-box pitch', () => {
+    expect(patternC.notes).toHaveLength(19)
+    const derived = derivePatternNotes(patternC, MAJOR_SCALE, STANDARD_TUNING)
+    const boxStart = patternC.root.fret - patternC.rootOffsetInBox
+    const boxEnd = boxStart + 4 - 1
+    const filtered = dropRedundantMarginNotes(derived, boxStart, boxEnd)
+    expect(filtered).toHaveLength(18)
+  })
+
+  it('keeps both margin occurrences of degree 7 (string 3 fret 0 and string 4 fret 5), since neither is inside the box', () => {
+    const derived = derivePatternNotes(patternC, MAJOR_SCALE, STANDARD_TUNING)
+    const boxStart = patternC.root.fret - patternC.rootOffsetInBox
+    const boxEnd = boxStart + 4 - 1
+    const filtered = dropRedundantMarginNotes(derived, boxStart, boxEnd)
+    const string3Fret0 = filtered.find((n) => n.stringIndex === 3 && n.fret === 0)
+    const string4Fret5 = filtered.find((n) => n.stringIndex === 2 && n.fret === 5)
+    expect(string3Fret0).toBeDefined()
+    expect(string4Fret5).toBeDefined()
+    expect(string3Fret0!.midi).toBe(string4Fret5!.midi)
+    expect(string3Fret0!.degree).toBe(7)
   })
 })

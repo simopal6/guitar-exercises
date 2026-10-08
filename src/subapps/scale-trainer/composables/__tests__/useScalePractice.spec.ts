@@ -53,6 +53,11 @@ function tick() {
   ;(Tone as unknown as { __getLastLoop: () => { callback: (t: number) => void } }).__getLastLoop().callback(0)
 }
 
+/** Mirrors useScalePractice's own distinctMidis: notes are already pitch-sorted, so Set insertion order is ascending. */
+function distinctMidis(notes: { midi: number }[]): number[] {
+  return [...new Set(notes.map((n) => n.midi))]
+}
+
 beforeEach(() => {
   localStorage.clear()
 })
@@ -69,46 +74,66 @@ describe('useScalePractice', () => {
     expect(result.canStart.value).toBe(true)
   })
 
-  it('start() moves to running and highlights the first note of the up/down sequence', async () => {
+  it('start() moves to running and highlights the first pitch of the up/down sequence', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
     expect(result.phase.value).toBe('running')
-    const expectedSequence = buildUpDownSequence(result.notes.value.length)
-    expect(result.currentNoteIndex.value).toBe(expectedSequence[0])
+    const midis = distinctMidis(result.notes.value)
+    const expectedSequence = buildUpDownSequence(midis.length)
+    expect(result.currentMidi.value).toBe(midis[expectedSequence[0]])
   })
 
-  it('advances the highlighted note by one step on each metronome beat', async () => {
+  it('advances the highlighted pitch by one step on each metronome beat', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
-    const sequence = buildUpDownSequence(result.notes.value.length)
+    const midis = distinctMidis(result.notes.value)
+    const sequence = buildUpDownSequence(midis.length)
 
     tick()
-    expect(result.currentNoteIndex.value).toBe(sequence[1])
+    expect(result.currentMidi.value).toBe(midis[sequence[1]])
 
     tick()
-    expect(result.currentNoteIndex.value).toBe(sequence[2])
+    expect(result.currentMidi.value).toBe(midis[sequence[2]])
   })
 
   it('loops the sequence around without stopping', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
-    const sequence = buildUpDownSequence(result.notes.value.length)
+    const midis = distinctMidis(result.notes.value)
+    const sequence = buildUpDownSequence(midis.length)
 
     for (let i = 0; i < sequence.length; i++) tick()
     // back to the start of the next period
-    expect(result.currentNoteIndex.value).toBe(sequence[0])
+    expect(result.currentMidi.value).toBe(midis[sequence[0]])
   })
 
   it('stop() returns to setup and further beats no longer advance the note', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
     tick()
-    const indexAtStop = result.currentNoteIndex.value
+    const midiAtStop = result.currentMidi.value
     result.stop()
     expect(result.phase.value).toBe('setup')
 
     tick()
-    expect(result.currentNoteIndex.value).toBe(indexAtStop) // no longer subscribed
+    expect(result.currentMidi.value).toBe(midiAtStop) // no longer subscribed
+  })
+
+  it('a pitch that stretches past both margins at once highlights every note sharing it on the same beat', async () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectPattern('major-scale-3')
+    await result.start()
+    const midis = distinctMidis(result.notes.value)
+    const sequence = buildUpDownSequence(midis.length)
+
+    // walk the whole sequence, checking every step for a shared-pitch moment
+    let foundSharedStep = false
+    for (let i = 0; i < sequence.length; i++) {
+      const notesAtCurrentPitch = result.notes.value.filter((n) => n.midi === result.currentMidi.value)
+      if (notesAtCurrentPitch.length > 1) foundSharedStep = true
+      tick()
+    }
+    expect(foundSharedStep).toBe(true)
   })
 
   it('adjustBpm persists the new tempo for the current pattern', async () => {

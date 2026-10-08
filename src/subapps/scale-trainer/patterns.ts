@@ -47,5 +47,26 @@ const patternB: ScalePattern = {
   notes: generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, patternBRoot, 3, 8),
 }
 
+const patternCRoot: ScalePatternNote = { string: 6, fret: 4 }
+
+/**
+ * Third major scale position, root on the 6th string, box touching the nut.
+ * Its standard box [1,4] is a fret away from a well-known standard-tuning
+ * coincidence: strings 4 and 3 are a perfect fourth apart (5 frets), the same
+ * distance as the box's far margin to its near margin — so the scale tone
+ * that stretches past the box on one side (string 4) always reappears,
+ * identical in pitch, stretching past it on the other side too (string 3).
+ * Both are kept (see dropRedundantMarginNotes — it only drops a margin note
+ * that duplicates one already inside the box, not margin-vs-margin).
+ */
+const patternC: ScalePattern = {
+  id: 'major-scale-3',
+  scaleId: MAJOR_SCALE.id,
+  label: 'Scala maggiore (3)',
+  root: patternCRoot,
+  rootOffsetInBox: 3, // root is the box's last (4th) fret (box = [1,4] for this root)
+  notes: generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, patternCRoot, 0, 5),
+}
+
 /** Every pattern the app knows about — add new patterns here as they're written. */
-export const PATTERNS: ScalePattern[] = [patternA, patternB]
+export const PATTERNS: ScalePattern[] = [patternA, patternB, patternC]

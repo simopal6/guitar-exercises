@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, watchEffect } from 'vue'
 import type { DerivedNote } from '../patternNotes'
+import { STANDARD_BOX_SIZE } from '../pattern'
 
 const props = defineProps<{
   notes: DerivedNote[]
-  /** Index into `notes` of the note to emphasize, or null when nothing is current. */
-  currentIndex: number | null
+  /** Pitch (midi) to emphasize, or null when nothing is current — every note at this pitch is emphasized, not just one, since the same pitch can legitimately appear twice (see dropRedundantMarginNotes). */
+  currentMidi: number | null
   /** The pattern's root fret — anchors the standard 4-fret box, see below. */
   rootFret: number
   /** Row offset (0-3) of the root within the standard box — see ScalePattern.rootOffsetInBox. */
@@ -19,19 +20,15 @@ const STRING_COUNT = 6
 const CELL_WIDTH = 48
 const CELL_HEIGHT = 54
 const TOP_MARGIN = 20
-// Wide enough to fit the position label ("10fr" at the widest) without it
-// being clipped by the SVG viewport's left edge — see positionLabel below.
 const SIDE_MARGIN = 34
 const DOT_RADIUS = 13
-const STANDARD_BOX_SIZE = 4
+// The note to play next is called out by size alone (no border change), so
+// it stays readable without relying on a color that must work in both themes.
+const CURRENT_DOT_RADIUS = 18
 const MARGIN_ROWS = 1 // on each side of the standard box
 
-// Border thickness/opacity — the only two values to touch to re-tune how
-// "current note" emphasis reads, independent of the degree fill color.
 const DOT_STROKE_WIDTH = 2
 const DOT_STROKE_OPACITY = 0.6
-const CURRENT_STROKE_WIDTH = 6
-const CURRENT_STROKE_OPACITY = 1
 
 // Not a fixed zoom level like ChordDiagram (one chord shown at a time, many
 // in sequence): a pattern is static for the whole practice session. The
@@ -46,7 +43,6 @@ const CURRENT_STROKE_OPACITY = 1
 const standardBoxStart = computed(() => props.rootFret - props.rootOffsetInBox)
 const fretStart = computed(() => Math.max(0, standardBoxStart.value - MARGIN_ROWS))
 const showsNut = computed(() => fretStart.value === 0)
-const positionLabel = computed(() => (showsNut.value ? null : `${standardBoxStart.value}fr`))
 // Normally always 6 rows (1 margin + 4 standard + 1 margin); clipped only
 // when the box reaches the nut, since there's no fret below 0 to reserve.
 const windowSize = computed(() => standardBoxStart.value + STANDARD_BOX_SIZE + MARGIN_ROWS - fretStart.value)
@@ -99,14 +95,6 @@ watchEffect(() => {
     role="img"
     aria-label="Posizione della scala sul manico"
   >
-    <text
-      v-if="positionLabel"
-      :x="SIDE_MARGIN - 6"
-      :y="fretLineY(standardBoxStart - fretStart) + 4"
-      text-anchor="end"
-      class="fill-slate-500 dark:fill-slate-400 text-xs"
-    >{{ positionLabel }}</text>
-
     <rect
       v-for="row in marginRowIndices"
       :key="`margin-${row}`"
@@ -140,15 +128,15 @@ watchEffect(() => {
     />
 
     <circle
-      v-for="(note, index) in notes"
+      v-for="note in notes"
       :key="`${note.stringIndex}-${note.fret}`"
       :cx="stringX(note.stringIndex)"
       :cy="fretDotY(note.fret)"
-      :r="DOT_RADIUS"
+      :r="note.midi === currentMidi ? CURRENT_DOT_RADIUS : DOT_RADIUS"
       :style="{ fill: note.color }"
-      :stroke-width="index === currentIndex ? CURRENT_STROKE_WIDTH : DOT_STROKE_WIDTH"
-      :stroke-opacity="index === currentIndex ? CURRENT_STROKE_OPACITY : DOT_STROKE_OPACITY"
-      :class="index === currentIndex ? 'stroke-black' : 'stroke-white dark:stroke-slate-950'"
+      :stroke-width="DOT_STROKE_WIDTH"
+      :stroke-opacity="DOT_STROKE_OPACITY"
+      class="stroke-white dark:stroke-slate-950"
       :aria-label="note.noteName"
     />
   </svg>
