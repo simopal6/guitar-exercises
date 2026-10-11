@@ -140,27 +140,27 @@ describe('useScalePractice', () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
     result.adjustBpm(1)
-    expect(result.bpm.value).toBe(65) // default 60 + 5
-    expect(getPatternTempo(result.patternId.value!)).toBe(65)
+    expect(result.bpm.value).toBe(90) // default 80 + 10
+    expect(getPatternTempo(result.patternId.value!)).toBe(90)
   })
 
   it('the setup-screen bpm preview reflects an adjustment made during practice, after stopping', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()
-    result.adjustBpm(1) // 60 -> 65
+    result.adjustBpm(1) // 80 -> 90
     result.stop()
-    expect(result.patternBpmPreview.value).toBe(65)
+    expect(result.patternBpmPreview.value).toBe(90)
   })
 
   it('a different pattern starts at its own previously-saved tempo, independent of others', async () => {
     const { result: first } = withSetup(useScalePractice)
     await first.start()
-    first.adjustBpm(2) // 60 -> 70
+    first.adjustBpm(2) // 80 -> 100
     first.stop()
 
     first.selectPattern(PATTERNS[1].id)
     await first.start()
-    expect(first.bpm.value).toBe(60) // never touched before, falls back to the default
+    expect(first.bpm.value).toBe(80) // never touched before, falls back to the default
   })
 
   it('selectPattern is a no-op once running', async () => {

@@ -8,8 +8,8 @@ import { derivePatternNotes, dropRedundantMarginNotes } from '../patternNotes'
 import { buildUpDownSequence } from '../sequence'
 import { getPatternTempo, setPatternTempo } from '../patternTempoStore'
 
-const BPM_STEP = 5
-const DEFAULT_BPM = 60
+const BPM_STEP = 10
+const DEFAULT_BPM = 80
 
 export type PracticePhase = 'setup' | 'running'
 
