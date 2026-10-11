@@ -16,9 +16,14 @@ function toPosition(note: { string: number; fret: number }): FretPosition {
   return { stringIndex: stringToIndex(note.string), fret: note.fret }
 }
 
+/** The pattern's declared root, as a MIDI pitch — the reference every degree/octave calculation is anchored to. */
+export function rootMidiOf(pattern: ScalePattern, tuning: Tuning): number {
+  return positionToMidi(tuning, toPosition(pattern.root))
+}
+
 /** Derives note name, scale degree and color for every note of a pattern — the only thing a pattern's author provides is positions + which one is the root + which scale. */
 export function derivePatternNotes(pattern: ScalePattern, scale: Scale, tuning: Tuning): DerivedNote[] {
-  const rootMidi = positionToMidi(tuning, toPosition(pattern.root))
+  const rootMidi = rootMidiOf(pattern, tuning)
   return pattern.notes.map((note) => {
     const position = toPosition(note)
     const midi = positionToMidi(tuning, position)

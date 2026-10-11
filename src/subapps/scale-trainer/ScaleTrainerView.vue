@@ -7,6 +7,9 @@ import MetronomeControl from '../../components/audio/MetronomeControl.vue'
 const {
   phase,
   patternId,
+  mode,
+  completeOctaves,
+  selectedOctaveIndex,
   notes,
   currentMidi,
   rootFret,
@@ -18,6 +21,8 @@ const {
   stop,
   adjustBpm,
   selectPattern,
+  selectMode,
+  selectOctave,
 } = useScalePractice()
 </script>
 
@@ -30,9 +35,14 @@ const {
     <PatternSetup
       v-if="phase === 'setup'"
       :pattern-id="patternId"
+      :mode="mode"
+      :complete-octaves="completeOctaves"
+      :selected-octave-index="selectedOctaveIndex"
       :pattern-bpm-preview="patternBpmPreview"
       :can-start="canStart"
       @select-pattern="selectPattern"
+      @select-mode="selectMode"
+      @select-octave="selectOctave"
       @start="start"
     />
 

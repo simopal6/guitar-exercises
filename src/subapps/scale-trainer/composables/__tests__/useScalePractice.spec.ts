@@ -141,7 +141,7 @@ describe('useScalePractice', () => {
     await result.start()
     result.adjustBpm(1)
     expect(result.bpm.value).toBe(90) // default 80 + 10
-    expect(getPatternTempo(result.patternId.value!)).toBe(90)
+    expect(getPatternTempo(`${result.patternId.value}:forma`)).toBe(90)
   })
 
   it('the setup-screen bpm preview reflects an adjustment made during practice, after stopping', async () => {
@@ -168,5 +168,84 @@ describe('useScalePractice', () => {
     await result.start()
     result.selectPattern(PATTERNS[1].id)
     expect(result.patternId.value).toBe(PATTERNS[0].id)
+  })
+
+  describe('"scala" mode (one root-to-root octave)', () => {
+    it('finds the two complete octaves of "Scala maggiore (1)", defaulting to the first one', () => {
+      const { result } = withSetup(useScalePractice)
+      expect(result.patternId.value).toBe('major-e-shape')
+      expect(result.completeOctaves.value).toEqual([
+        { lowMidi: 43, highMidi: 55 },
+        { lowMidi: 55, highMidi: 67 },
+      ])
+      expect(result.selectedOctaveIndex.value).toBe(0)
+    })
+
+    it('steps only through the chosen octave, starting and ending exactly on its root', async () => {
+      const { result } = withSetup(useScalePractice)
+      result.selectMode('scala')
+      await result.start()
+
+      const octave = result.completeOctaves.value[0]
+      const octaveMidis = [...new Set(result.notes.value.map((n) => n.midi))].filter(
+        (m) => m >= octave.lowMidi && m <= octave.highMidi,
+      )
+      const sequence = buildUpDownSequence(octaveMidis.length)
+
+      // first step is the low root
+      expect(result.currentMidi.value).toBe(octave.lowMidi)
+
+      // walk a whole period: every step stays within the octave, and the top of the "up" leg is the high root
+      for (let i = 1; i < sequence.length; i++) {
+        tick()
+        expect(result.currentMidi.value).toBeGreaterThanOrEqual(octave.lowMidi)
+        expect(result.currentMidi.value).toBeLessThanOrEqual(octave.highMidi)
+      }
+      // back to the low root at the start of the next period
+      tick()
+      expect(result.currentMidi.value).toBe(octave.lowMidi)
+    })
+
+    it('switching to the other octave changes which pitches are stepped through', async () => {
+      const { result } = withSetup(useScalePractice)
+      result.selectMode('scala')
+      result.selectOctave(1)
+      await result.start()
+
+      const octave = result.completeOctaves.value[1]
+      expect(result.currentMidi.value).toBe(octave.lowMidi)
+    })
+
+    it('selectMode and selectOctave are no-ops once running', async () => {
+      const { result } = withSetup(useScalePractice)
+      await result.start()
+      result.selectMode('scala')
+      result.selectOctave(1)
+      expect(result.mode.value).toBe('forma')
+      expect(result.selectedOctaveIndex.value).toBe(0)
+    })
+
+    it('remembers tempo separately for "forma", and for each octave of "scala"', async () => {
+      const { result } = withSetup(useScalePractice)
+
+      await result.start() // forma
+      result.adjustBpm(1) // 80 -> 90
+      result.stop()
+
+      result.selectMode('scala') // octave 0
+      await result.start()
+      expect(result.bpm.value).toBe(80) // never touched before, independent of "forma"'s 90
+      result.adjustBpm(2) // 80 -> 100
+      result.stop()
+
+      result.selectOctave(1) // octave 1, still untouched
+      await result.start()
+      expect(result.bpm.value).toBe(80)
+      result.stop()
+
+      result.selectOctave(0)
+      await result.start()
+      expect(result.bpm.value).toBe(100) // octave 0's own tempo, preserved
+    })
   })
 })
