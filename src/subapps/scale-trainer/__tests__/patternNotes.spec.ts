@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAJOR_SCALE, STANDARD_TUNING } from '../../../theory'
+import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
@@ -104,28 +104,24 @@ describe('dropRedundantMarginNotes', () => {
   })
 })
 
-describe('major-scale-3 (root on string 6, box touching the nut)', () => {
-  const patternC = PATTERNS.find((p) => p.id === 'major-scale-3')!
+describe('major-pentatonic (same shape as "Scala maggiore (1)", degrees 4 and 7 removed)', () => {
+  const patternPentatonic = PATTERNS.find((p) => p.id === 'major-pentatonic')!
 
-  it('generates 19 raw notes, 18 after dropping the one that duplicates an in-box pitch', () => {
-    expect(patternC.notes).toHaveLength(19)
-    const derived = derivePatternNotes(patternC, MAJOR_SCALE, STANDARD_TUNING)
-    const boxStart = patternC.root.fret - patternC.rootOffsetInBox
-    const boxEnd = boxStart + 4 - 1
-    const filtered = dropRedundantMarginNotes(derived, boxStart, boxEnd)
-    expect(filtered).toHaveLength(18)
+  it('has 12 notes: the 17 of "Scala maggiore (1)" minus the 5 major-only (degree 4 or 7) positions', () => {
+    expect(patternPentatonic.notes).toHaveLength(12)
   })
 
-  it('keeps both margin occurrences of degree 7 (string 3 fret 0 and string 4 fret 5), since neither is inside the box', () => {
-    const derived = derivePatternNotes(patternC, MAJOR_SCALE, STANDARD_TUNING)
-    const boxStart = patternC.root.fret - patternC.rootOffsetInBox
-    const boxEnd = boxStart + 4 - 1
-    const filtered = dropRedundantMarginNotes(derived, boxStart, boxEnd)
-    const string3Fret0 = filtered.find((n) => n.stringIndex === 3 && n.fret === 0)
-    const string4Fret5 = filtered.find((n) => n.stringIndex === 2 && n.fret === 5)
-    expect(string3Fret0).toBeDefined()
-    expect(string4Fret5).toBeDefined()
-    expect(string3Fret0!.midi).toBe(string4Fret5!.midi)
-    expect(string3Fret0!.degree).toBe(7)
+  it('shares the same root (6th string, 3rd fret) as "Scala maggiore (1)"', () => {
+    const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')!
+    expect(patternPentatonic.root).toEqual(patternA.root)
+    expect(patternPentatonic.rootOffsetInBox).toBe(patternA.rootOffsetInBox)
+  })
+
+  it('every derived degree is one of the pentatonic scale\'s five degrees, 1 through 5', () => {
+    const derived = derivePatternNotes(patternPentatonic, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING)
+    for (const note of derived) {
+      expect(note.degree).toBeGreaterThanOrEqual(1)
+      expect(note.degree).toBeLessThanOrEqual(5)
+    }
   })
 })

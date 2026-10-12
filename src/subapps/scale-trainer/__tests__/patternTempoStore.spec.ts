@@ -23,9 +23,9 @@ describe('patternTempoStore', () => {
 
   it('keeps different patterns independent', () => {
     setPatternTempo('major-e-shape', 65)
-    setPatternTempo('major-a-shape', 90)
+    setPatternTempo('major-pentatonic', 90)
     expect(getPatternTempo('major-e-shape')).toBe(65)
-    expect(getPatternTempo('major-a-shape')).toBe(90)
+    expect(getPatternTempo('major-pentatonic')).toBe(90)
   })
 
   it('does not throw on malformed JSON in localStorage', () => {

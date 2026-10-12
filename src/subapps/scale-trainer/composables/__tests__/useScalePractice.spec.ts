@@ -119,23 +119,6 @@ describe('useScalePractice', () => {
     expect(result.currentMidi.value).toBe(midiAtStop) // no longer subscribed
   })
 
-  it('a pitch that stretches past both margins at once highlights every note sharing it on the same beat', async () => {
-    const { result } = withSetup(useScalePractice)
-    result.selectPattern('major-scale-3')
-    await result.start()
-    const midis = distinctMidis(result.notes.value)
-    const sequence = buildUpDownSequence(midis.length)
-
-    // walk the whole sequence, checking every step for a shared-pitch moment
-    let foundSharedStep = false
-    for (let i = 0; i < sequence.length; i++) {
-      const notesAtCurrentPitch = result.notes.value.filter((n) => n.midi === result.currentMidi.value)
-      if (notesAtCurrentPitch.length > 1) foundSharedStep = true
-      tick()
-    }
-    expect(foundSharedStep).toBe(true)
-  })
-
   it('adjustBpm persists the new tempo for the current pattern', async () => {
     const { result } = withSetup(useScalePractice)
     await result.start()

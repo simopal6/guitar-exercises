@@ -11,8 +11,14 @@ export const MAJOR_SCALE: Scale = {
   formula: [0, 2, 4, 5, 7, 9, 11],
 }
 
+export const MAJOR_PENTATONIC_SCALE: Scale = {
+  id: 'major-pentatonic',
+  name: 'Pentatonica',
+  formula: [0, 2, 4, 7, 9], // major scale with the 4th and 7th degrees removed
+}
+
 /** Every scale the app knows about — add new scales here as they're written. */
-export const SCALES: Scale[] = [MAJOR_SCALE]
+export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE]
 
 /**
  * Degree (1-based) of a note relative to the root, regardless of octave —

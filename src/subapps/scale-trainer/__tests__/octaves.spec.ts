@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { findCompleteOctaves, octaveLabel } from '../octaves'
-import { MAJOR_SCALE, STANDARD_TUNING } from '../../../theory'
+import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING, type Scale } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, rootMidiOf } from '../patternNotes'
 import { STANDARD_BOX_SIZE } from '../pattern'
 import { PATTERNS } from '../patterns'
@@ -38,25 +38,28 @@ describe('findCompleteOctaves', () => {
   })
 
   describe('on the real patterns', () => {
-    function completeOctavesFor(patternId: string) {
+    function completeOctavesFor(patternId: string, scale: Scale) {
       const pattern = PATTERNS.find((p) => p.id === patternId)!
-      const derived = derivePatternNotes(pattern, MAJOR_SCALE, STANDARD_TUNING)
+      const derived = derivePatternNotes(pattern, scale, STANDARD_TUNING)
       const boxStart = pattern.root.fret - pattern.rootOffsetInBox
       const boxEnd = boxStart + STANDARD_BOX_SIZE - 1
       const notes = dropRedundantMarginNotes(derived, boxStart, boxEnd)
       const distinctMidis = [...new Set(notes.map((n) => n.midi))].sort((a, b) => a - b)
-      return findCompleteOctaves(distinctMidis, rootMidiOf(pattern, STANDARD_TUNING), MAJOR_SCALE.formula)
+      return findCompleteOctaves(distinctMidis, rootMidiOf(pattern, STANDARD_TUNING), scale.formula)
     }
 
     it('finds two complete octaves for "Scala maggiore (1)" (root 6th string, 3rd fret)', () => {
-      expect(completeOctavesFor('major-e-shape')).toEqual([
+      expect(completeOctavesFor('major-e-shape', MAJOR_SCALE)).toEqual([
         { lowMidi: 43, highMidi: 55 },
         { lowMidi: 55, highMidi: 67 },
       ])
     })
 
-    it('finds a single complete octave for "Scala maggiore (2)" (root 5th string, 7th fret)', () => {
-      expect(completeOctavesFor('major-a-shape')).toEqual([{ lowMidi: 52, highMidi: 64 }])
+    it('finds two complete octaves for "Pentatonica" too, sharing the same root as "Scala maggiore (1)"', () => {
+      expect(completeOctavesFor('major-pentatonic', MAJOR_PENTATONIC_SCALE)).toEqual([
+        { lowMidi: 43, highMidi: 55 },
+        { lowMidi: 55, highMidi: 67 },
+      ])
     })
   })
 })

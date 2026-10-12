@@ -2,15 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ScalePatternDiagram from '../ScalePatternDiagram.vue'
 import { MAJOR_SCALE, STANDARD_TUNING } from '../../../../theory'
-import { derivePatternNotes } from '../../patternNotes'
+import { derivePatternNotes, type DerivedNote } from '../../patternNotes'
 import { PATTERNS } from '../../patterns'
 
 const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')! // root fret 3, no stretch notes
-const patternB = PATTERNS.find((p) => p.id === 'major-a-shape')! // root fret 7, root is the box's last row, one note stretches above
-const patternC = PATTERNS.find((p) => p.id === 'major-scale-3')! // root fret 4, degree 7 stretches identically past both margins
 const notesA = derivePatternNotes(patternA, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
-const notesB = derivePatternNotes(patternB, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
-const notesC = derivePatternNotes(patternC, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
+
+/** A minimal, synthetic note — not tied to any real pattern — for testing margin/stretch behavior in isolation. */
+function fakeNote(partial: Partial<DerivedNote> & Pick<DerivedNote, 'stringIndex' | 'fret' | 'midi'>): DerivedNote {
+  return { noteName: '', degree: 1, color: '#123456', ...partial }
+}
 
 describe('ScalePatternDiagram', () => {
   it('draws one dot per note', () => {
@@ -76,8 +77,9 @@ describe('ScalePatternDiagram', () => {
       expect(fretLines).toHaveLength(7) // 6 rows = 7 boundary lines
     })
 
-    it('shows exactly 6 rows for a pattern with a stretch note above the standard box', () => {
-      const wrapper = mount(ScalePatternDiagram, { props: { notes: notesB, currentMidi: null, rootFret: patternB.root.fret, rootOffsetInBox: patternB.rootOffsetInBox } })
+    it('shows exactly 6 rows regardless of root position (window size depends only on root/offset, not on the notes)', () => {
+      // root fret 7, offset 3 -> box [4,7]; empty notes on purpose, the row count doesn't depend on them
+      const wrapper = mount(ScalePatternDiagram, { props: { notes: [], currentMidi: null, rootFret: 7, rootOffsetInBox: 3 } })
       const fretLines = wrapper.findAll('line').filter((l) => l.attributes('y1') === l.attributes('y2'))
       expect(fretLines).toHaveLength(7)
     })
@@ -89,27 +91,25 @@ describe('ScalePatternDiagram', () => {
     })
 
     it('highlights a note sitting in the margin row exactly like any other current note', () => {
-      // patternB's highest fret (8) is the stretch note above the standard box [4,7]
-      const stretchIndex = notesB.findIndex((n) => n.fret === 8)
-      expect(stretchIndex).toBeGreaterThanOrEqual(0)
-      const otherIndex = notesB.findIndex((n) => n.midi !== notesB[stretchIndex].midi)
-      const wrapper = mount(ScalePatternDiagram, { props: { notes: notesB, currentMidi: notesB[stretchIndex].midi, rootFret: patternB.root.fret, rootOffsetInBox: patternB.rootOffsetInBox } })
+      // root fret 4, offset 1 -> box [3,6], margins at fret 2 and fret 7
+      const boxNote = fakeNote({ stringIndex: 0, fret: 3, midi: 40 })
+      const stretchNote = fakeNote({ stringIndex: 1, fret: 7, midi: 50 }) // margin, above the box
+      const wrapper = mount(ScalePatternDiagram, {
+        props: { notes: [boxNote, stretchNote], currentMidi: stretchNote.midi, rootFret: 4, rootOffsetInBox: 1 },
+      })
       const circles = wrapper.findAll('circle')
-      const currentRadius = Number(circles[stretchIndex].attributes('r'))
-      const otherRadius = Number(circles[otherIndex].attributes('r'))
+      const currentRadius = Number(circles[1].attributes('r'))
+      const otherRadius = Number(circles[0].attributes('r'))
       expect(currentRadius).toBeGreaterThan(otherRadius)
     })
 
     it('highlights every dot sharing the current pitch at once, not just one, when the same scale tone stretches past both margins', () => {
-      // patternC's degree-7 pitch stretches identically past both margins: string 4 fret 5 (far) and string 3 fret 0 (near, the nut)
-      const string4Fret5 = notesC.find((n) => n.stringIndex === 2 && n.fret === 5)!
-      const string3Fret0 = notesC.find((n) => n.stringIndex === 3 && n.fret === 0)!
-      const duplicatePitchNotes = [string4Fret5, string3Fret0]
-      expect(duplicatePitchNotes.every(Boolean)).toBe(true)
-      expect(duplicatePitchNotes[0].midi).toBe(duplicatePitchNotes[1].midi)
-
+      // root fret 5, offset 2 -> box [3,6], margins at fret 2 and fret 7: two different strings, same pitch, both outside the box
+      const marginLow = fakeNote({ stringIndex: 0, fret: 2, midi: 48 })
+      const marginHigh = fakeNote({ stringIndex: 1, fret: 7, midi: 48 })
+      const boxNote = fakeNote({ stringIndex: 2, fret: 4, midi: 50 })
       const wrapper = mount(ScalePatternDiagram, {
-        props: { notes: notesC, currentMidi: duplicatePitchNotes[0].midi, rootFret: patternC.root.fret, rootOffsetInBox: patternC.rootOffsetInBox },
+        props: { notes: [marginLow, marginHigh, boxNote], currentMidi: 48, rootFret: 5, rootOffsetInBox: 2 },
       })
       const circles = wrapper.findAll('circle')
       const highlightedCount = circles.filter((c) => Number(c.attributes('r')) > 13).length
