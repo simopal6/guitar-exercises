@@ -29,7 +29,6 @@ vi.mock('tone', () => {
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
-    context: { state: 'running' },
     Transport,
     MetalSynth,
     Loop,

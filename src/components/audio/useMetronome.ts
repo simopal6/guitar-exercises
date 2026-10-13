@@ -44,9 +44,6 @@ export function useMetronome(initialBpm: number): Metronome {
   async function ensureEngine(): Promise<typeof import('tone')> {
     if (!Tone) Tone = await import('tone')
     await Tone.start() // no-op if the context is already running
-    // Temporary diagnostic for an iOS Safari report (audio silent, everything
-    // else working): confirms whether resume() actually reached "running".
-    console.log('[metronome] AudioContext state after Tone.start():', Tone.context?.state)
     if (!synth) {
       // Bright, metallic percussive hit (the same synthesis technique often
       // used for hi-hats) — short and inharmonic, reads as a crisp "tick".
