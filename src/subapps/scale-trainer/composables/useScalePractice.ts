@@ -107,8 +107,12 @@ export function useScalePractice() {
     currentStep.value = 0
     const key = tempoKey()
     metronome.setBpm((key ? getPatternTempo(key) : undefined) ?? DEFAULT_BPM)
-    await wakeLock.request() // same user gesture that unlocks the metronome's audio context
+    // iOS Safari only resumes the audio context if that happens with no other
+    // awaited work in between it and the click — wakeLock.request() is itself
+    // async and, if awaited first, pushes the resume past the gesture window
+    // (silently leaving audio suspended, though everything else still runs).
     await metronome.start()
+    await wakeLock.request()
     unsubscribeBeat = metronome.onBeat(() => {
       currentStep.value = (currentStep.value + 1) % sequence.value.length
     })

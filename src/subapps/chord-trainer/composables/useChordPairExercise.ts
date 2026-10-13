@@ -135,8 +135,12 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
   async function start() {
     if (!canStart.value) return
     bag = []
-    await wakeLock.request() // same user gesture that unlocks the metronome's audio context
+    // iOS Safari only resumes the audio context if that happens with no other
+    // awaited work in between it and the click — wakeLock.request() is itself
+    // async and, if awaited first, pushes the resume past the gesture window
+    // (silently leaving audio suspended, though everything else still runs).
     await metronome.start()
+    await wakeLock.request()
     phase.value = 'running'
     startTurn()
     clearTimer()
