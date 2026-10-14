@@ -1,20 +1,29 @@
 export interface Scale {
   id: string
   name: string
-  /** Semitones from the root, one entry per degree (index 0 = degree 1). Always includes 0. */
+  /** Semitones from the root, one entry per entry of `degrees`. Always includes 0. */
   formula: number[]
+  /**
+   * Degree number (1-based) for each entry of `formula`, in the same order.
+   * For a full 7-note scale this is just [1, 2, 3, 4, 5, 6, 7], but a subset
+   * scale like the pentatonic keeps the degree numbers of the scale it was
+   * derived from (e.g. [1, 2, 3, 5, 6]), not its own 1..N position.
+   */
+  degrees: number[]
 }
 
 export const MAJOR_SCALE: Scale = {
   id: 'major',
   name: 'Maggiore',
   formula: [0, 2, 4, 5, 7, 9, 11],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
 }
 
 export const MAJOR_PENTATONIC_SCALE: Scale = {
   id: 'major-pentatonic',
   name: 'Pentatonica',
   formula: [0, 2, 4, 7, 9], // major scale with the 4th and 7th degrees removed
+  degrees: [1, 2, 3, 5, 6],
 }
 
 /** Every scale the app knows about — add new scales here as they're written. */
@@ -34,5 +43,5 @@ export function scaleDegree(scale: Scale, semitonesFromRoot: number): number {
   if (index === -1) {
     throw new RangeError(`${pitchClass} semitones from the root does not belong to the "${scale.name}" scale`)
   }
-  return index + 1
+  return scale.degrees[index]
 }

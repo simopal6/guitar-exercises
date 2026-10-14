@@ -117,11 +117,10 @@ describe('major-pentatonic (same shape as "Scala maggiore (1)", degrees 4 and 7 
     expect(patternPentatonic.rootOffsetInBox).toBe(patternA.rootOffsetInBox)
   })
 
-  it('every derived degree is one of the pentatonic scale\'s five degrees, 1 through 5', () => {
+  it('every derived degree is one of the pentatonic scale\'s real degrees: 1, 2, 3, 5, 6', () => {
     const derived = derivePatternNotes(patternPentatonic, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING)
     for (const note of derived) {
-      expect(note.degree).toBeGreaterThanOrEqual(1)
-      expect(note.degree).toBeLessThanOrEqual(5)
+      expect([1, 2, 3, 5, 6]).toContain(note.degree)
     }
   })
 })
