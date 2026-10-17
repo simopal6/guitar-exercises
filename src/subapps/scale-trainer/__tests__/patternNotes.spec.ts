@@ -54,7 +54,7 @@ describe('generateScaleBoxNotes', () => {
 
   it('only returns positions whose pitch class actually belongs to the scale', () => {
     const derived = derivePatternNotes(
-      { id: 'test', scaleId: MAJOR_SCALE.id, label: 'test', root, rootOffsetInBox: 1, notes },
+      { id: 'test', shapeId: 'test', scaleId: MAJOR_SCALE.id, label: 'test', scaleLabel: 'test', root, rootOffsetInBox: 1, notes },
       MAJOR_SCALE,
       STANDARD_TUNING,
     )

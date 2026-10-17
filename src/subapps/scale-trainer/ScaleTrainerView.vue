@@ -8,6 +8,8 @@ const {
   phase,
   patternId,
   mode,
+  shapeId,
+  patternsForShape,
   completeOctaves,
   selectedOctaveIndex,
   notes,
@@ -20,8 +22,9 @@ const {
   start,
   stop,
   adjustBpm,
-  selectPattern,
   selectMode,
+  selectShape,
+  selectScale,
   selectOctave,
 } = useScalePractice()
 </script>
@@ -36,12 +39,15 @@ const {
       v-if="phase === 'setup'"
       :pattern-id="patternId"
       :mode="mode"
+      :shape-id="shapeId"
+      :scales-for-shape="patternsForShape"
       :complete-octaves="completeOctaves"
       :selected-octave-index="selectedOctaveIndex"
       :pattern-bpm-preview="patternBpmPreview"
       :can-start="canStart"
-      @select-pattern="selectPattern"
       @select-mode="selectMode"
+      @select-shape="selectShape"
+      @select-scale="selectScale"
       @select-octave="selectOctave"
       @start="start"
     />

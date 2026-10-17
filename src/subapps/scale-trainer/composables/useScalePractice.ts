@@ -21,9 +21,13 @@ export type PracticeMode = 'forma' | 'scala'
  * exercise — it just loops the current pattern until the player stops it.
  */
 export function useScalePractice() {
-  const patternId = ref<string | null>(PATTERNS[0]?.id ?? null)
   const phase = ref<PracticePhase>('setup')
-  const mode = ref<PracticeMode>('forma')
+  // All three start unset: the setup screen reveals its rows in sequence as
+  // each one is answered (mode, then shape, then — if the shape offers more
+  // than one scale — the scale itself).
+  const mode = ref<PracticeMode | null>(null)
+  const shapeId = ref<string | null>(null)
+  const patternId = ref<string | null>(null)
   const selectedOctaveIndex = ref(0)
   const currentStep = ref(0)
 
@@ -33,6 +37,7 @@ export function useScalePractice() {
   let unsubscribeBeat: (() => void) | null = null
 
   const selectedPattern = computed(() => PATTERNS.find((p) => p.id === patternId.value) ?? null)
+  const patternsForShape = computed(() => (shapeId.value ? PATTERNS.filter((p) => p.shapeId === shapeId.value) : []))
 
   const notes = computed(() => {
     const pattern = selectedPattern.value
@@ -136,15 +141,29 @@ export function useScalePractice() {
     refreshPatternBpmPreview()
   }
 
-  function selectPattern(id: string) {
-    if (phase.value !== 'setup') return
-    patternId.value = id
-    selectedOctaveIndex.value = 0 // a different pattern has a different set of octaves
-  }
-
   function selectMode(next: PracticeMode) {
     if (phase.value !== 'setup') return
     mode.value = next
+    shapeId.value = null
+    patternId.value = null
+    selectedOctaveIndex.value = 0
+  }
+
+  function selectShape(id: string) {
+    if (phase.value !== 'setup') return
+    shapeId.value = id
+    const matches = PATTERNS.filter((p) => p.shapeId === id)
+    // A shape with a single scale resolves on its own, same as the octave
+    // row below auto-resolving when there's only one complete octave.
+    patternId.value = matches.length === 1 ? matches[0].id : null
+    selectedOctaveIndex.value = 0
+  }
+
+  function selectScale(id: string) {
+    if (phase.value !== 'setup') return
+    if (!patternsForShape.value.some((p) => p.id === id)) return
+    patternId.value = id
+    selectedOctaveIndex.value = 0
   }
 
   function selectOctave(index: number) {
@@ -163,6 +182,8 @@ export function useScalePractice() {
     patternId,
     selectedPattern,
     mode,
+    shapeId,
+    patternsForShape,
     completeOctaves,
     selectedOctaveIndex,
     notes,
@@ -175,8 +196,9 @@ export function useScalePractice() {
     start,
     stop,
     adjustBpm,
-    selectPattern,
     selectMode,
+    selectShape,
+    selectScale,
     selectOctave,
   }
 }

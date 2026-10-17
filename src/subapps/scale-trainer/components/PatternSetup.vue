@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { PATTERNS } from '../patterns'
+import { SHAPES } from '../patterns'
 import { octaveLabel } from '../octaves'
 import type { PracticeMode } from '../composables/useScalePractice'
 import type { ScaleOctave } from '../octaves'
+import type { ScalePattern } from '../pattern'
 
 defineProps<{
+  mode: PracticeMode | null
+  shapeId: string | null
   patternId: string | null
-  mode: PracticeMode
+  scalesForShape: ScalePattern[]
   completeOctaves: ScaleOctave[]
   selectedOctaveIndex: number
   patternBpmPreview: number
@@ -14,8 +17,9 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'select-pattern': [id: string]
   'select-mode': [mode: PracticeMode]
+  'select-shape': [id: string]
+  'select-scale': [id: string]
   'select-octave': [index: number]
   start: []
 }>()
@@ -31,22 +35,6 @@ function pillClass(active: boolean, disabled = false): string {
 <template>
   <div class="flex flex-col gap-4">
     <div>
-      <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Posizione</p>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="pattern in PATTERNS"
-          :key="pattern.id"
-          type="button"
-          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="pillClass(pattern.id === patternId)"
-          @click="emit('select-pattern', pattern.id)"
-        >
-          {{ pattern.label }}
-        </button>
-      </div>
-    </div>
-
-    <div>
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Modalità</p>
       <div class="flex flex-wrap gap-2">
         <button
@@ -59,12 +47,43 @@ function pillClass(active: boolean, disabled = false): string {
         </button>
         <button
           type="button"
-          :disabled="completeOctaves.length === 0"
-          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed"
-          :class="pillClass(mode === 'scala', completeOctaves.length === 0)"
+          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
+          :class="pillClass(mode === 'scala')"
           @click="emit('select-mode', 'scala')"
         >
           Scala
+        </button>
+      </div>
+    </div>
+
+    <div v-if="mode !== null">
+      <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Forma</p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="shape in SHAPES"
+          :key="shape.id"
+          type="button"
+          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
+          :class="pillClass(shape.id === shapeId)"
+          @click="emit('select-shape', shape.id)"
+        >
+          {{ shape.label }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="mode === 'scala' && shapeId !== null">
+      <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Scala</p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="pattern in scalesForShape"
+          :key="pattern.id"
+          type="button"
+          class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
+          :class="pillClass(pattern.id === patternId)"
+          @click="emit('select-scale', pattern.id)"
+        >
+          {{ pattern.scaleLabel }}
         </button>
       </div>
     </div>

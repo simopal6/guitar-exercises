@@ -67,15 +67,36 @@ afterEach(() => {
 })
 
 describe('useScalePractice', () => {
-  it('starts in setup, defaulting to the first known pattern', () => {
+  it('starts in setup with nothing chosen yet, so practice cannot start', () => {
     const { result } = withSetup(useScalePractice)
     expect(result.phase.value).toBe('setup')
+    expect(result.mode.value).toBeNull()
+    expect(result.shapeId.value).toBeNull()
+    expect(result.patternId.value).toBeNull()
+    expect(result.canStart.value).toBe(false)
+  })
+
+  it('selecting a shape with a single scale resolves the pattern on its own', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     expect(result.patternId.value).toBe(PATTERNS[0].id)
     expect(result.canStart.value).toBe(true)
   })
 
+  it('changing mode resets the shape and pattern already chosen', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
+    result.selectMode('scala')
+    expect(result.shapeId.value).toBeNull()
+    expect(result.patternId.value).toBeNull()
+  })
+
   it('start() moves to running and highlights the first pitch of the up/down sequence', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     expect(result.phase.value).toBe('running')
     const midis = distinctMidis(result.notes.value)
@@ -85,6 +106,8 @@ describe('useScalePractice', () => {
 
   it('advances the highlighted pitch by one step on each metronome beat', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     const midis = distinctMidis(result.notes.value)
     const sequence = buildUpDownSequence(midis.length)
@@ -98,6 +121,8 @@ describe('useScalePractice', () => {
 
   it('loops the sequence around without stopping', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     const midis = distinctMidis(result.notes.value)
     const sequence = buildUpDownSequence(midis.length)
@@ -109,6 +134,8 @@ describe('useScalePractice', () => {
 
   it('stop() returns to setup and further beats no longer advance the note', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     tick()
     const midiAtStop = result.currentMidi.value
@@ -121,6 +148,8 @@ describe('useScalePractice', () => {
 
   it('adjustBpm persists the new tempo for the current pattern', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     result.adjustBpm(1)
     expect(result.bpm.value).toBe(90) // default 80 + 10
@@ -129,33 +158,47 @@ describe('useScalePractice', () => {
 
   it('the setup-screen bpm preview reflects an adjustment made during practice, after stopping', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     result.adjustBpm(1) // 80 -> 90
     result.stop()
     expect(result.patternBpmPreview.value).toBe(90)
   })
 
-  it('a different pattern starts at its own previously-saved tempo, independent of others', async () => {
+  it('a different shape starts at its own previously-saved tempo, independent of others', async () => {
     const { result: first } = withSetup(useScalePractice)
+    first.selectMode('forma')
+    first.selectShape(PATTERNS[0].shapeId)
     await first.start()
     first.adjustBpm(2) // 80 -> 100
     first.stop()
 
-    first.selectPattern(PATTERNS[1].id)
+    first.selectShape(PATTERNS[1].shapeId)
     await first.start()
     expect(first.bpm.value).toBe(80) // never touched before, falls back to the default
   })
 
-  it('selectPattern is a no-op once running', async () => {
+  it('selectMode, selectShape and selectScale are no-ops once running', async () => {
     const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape(PATTERNS[0].shapeId)
     await result.start()
-    result.selectPattern(PATTERNS[1].id)
+    result.selectMode('scala')
+    result.selectShape(PATTERNS[1].shapeId)
+    expect(result.mode.value).toBe('forma')
     expect(result.patternId.value).toBe(PATTERNS[0].id)
   })
 
   describe('"scala" mode (one root-to-root octave)', () => {
+    function setupScala(result: ReturnType<typeof useScalePractice>) {
+      result.selectMode('scala')
+      result.selectShape('major-e-shape') // "Scala maggiore (1)", the shape with two complete octaves
+    }
+
     it('finds the two complete octaves of "Scala maggiore (1)", defaulting to the first one', () => {
       const { result } = withSetup(useScalePractice)
+      setupScala(result)
       expect(result.patternId.value).toBe('major-e-shape')
       expect(result.completeOctaves.value).toEqual([
         { lowMidi: 43, highMidi: 55 },
@@ -166,7 +209,7 @@ describe('useScalePractice', () => {
 
     it('steps only through the chosen octave, starting and ending exactly on its root', async () => {
       const { result } = withSetup(useScalePractice)
-      result.selectMode('scala')
+      setupScala(result)
       await result.start()
 
       const octave = result.completeOctaves.value[0]
@@ -191,7 +234,7 @@ describe('useScalePractice', () => {
 
     it('switching to the other octave changes which pitches are stepped through', async () => {
       const { result } = withSetup(useScalePractice)
-      result.selectMode('scala')
+      setupScala(result)
       result.selectOctave(1)
       await result.start()
 
@@ -199,23 +242,24 @@ describe('useScalePractice', () => {
       expect(result.currentMidi.value).toBe(octave.lowMidi)
     })
 
-    it('selectMode and selectOctave are no-ops once running', async () => {
+    it('selectOctave is a no-op once running', async () => {
       const { result } = withSetup(useScalePractice)
+      setupScala(result)
       await result.start()
-      result.selectMode('scala')
       result.selectOctave(1)
-      expect(result.mode.value).toBe('forma')
       expect(result.selectedOctaveIndex.value).toBe(0)
     })
 
     it('remembers tempo separately for "forma", and for each octave of "scala"', async () => {
       const { result } = withSetup(useScalePractice)
 
+      result.selectMode('forma')
+      result.selectShape('major-e-shape')
       await result.start() // forma
       result.adjustBpm(1) // 80 -> 90
       result.stop()
 
-      result.selectMode('scala') // octave 0
+      setupScala(result) // octave 0
       await result.start()
       expect(result.bpm.value).toBe(80) // never touched before, independent of "forma"'s 90
       result.adjustBpm(2) // 80 -> 100

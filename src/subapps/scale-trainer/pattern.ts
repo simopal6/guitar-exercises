@@ -12,8 +12,13 @@ export interface ScalePatternNote {
 
 export interface ScalePattern {
   id: string
+  /** Groups every pattern sharing the same physical box/root — a "shape" can offer more than one scale. */
+  shapeId: string
   scaleId: string
+  /** The shape's own name, shown when picking a shape (e.g. "Scala maggiore (1)"). Identical for every pattern sharing a `shapeId`. */
   label: string
+  /** The scale's name within this shape, shown when picking a scale inside an already-chosen shape (e.g. "Ionian"). */
+  scaleLabel: string
   notes: ScalePatternNote[]
   /** Which position is the root — the reference pitch for degree calculation. Not necessarily listed first in `notes`. */
   root: ScalePatternNote

@@ -6,8 +6,10 @@ const patternARoot: ScalePatternNote = { string: 6, fret: 3 }
 /** First major scale position, root on the 6th string. Hand-written, as most patterns will be. */
 const patternA: ScalePattern = {
   id: 'major-e-shape',
+  shapeId: 'major-e-shape',
   scaleId: MAJOR_SCALE.id,
   label: 'Scala maggiore (1)',
+  scaleLabel: 'Ionian',
   root: patternARoot,
   rootOffsetInBox: 1, // root is the box's 2nd fret (box = [2,5] for this root)
   notes: [
@@ -38,8 +40,10 @@ const patternA: ScalePattern = {
  */
 const patternPentatonic: ScalePattern = {
   id: 'major-pentatonic',
+  shapeId: 'major-pentatonic',
   scaleId: MAJOR_PENTATONIC_SCALE.id,
   label: 'Pentatonica',
+  scaleLabel: 'Pentatonica maggiore',
   root: patternARoot,
   rootOffsetInBox: 1,
   notes: [
@@ -60,3 +64,13 @@ const patternPentatonic: ScalePattern = {
 
 /** Every pattern the app knows about — add new patterns here as they're written. */
 export const PATTERNS: ScalePattern[] = [patternA, patternPentatonic]
+
+export interface ScaleShape {
+  id: string
+  label: string
+}
+
+/** Every distinct shape, derived from PATTERNS — a shape may offer more than one scale. */
+export const SHAPES: ScaleShape[] = [
+  ...new Map(PATTERNS.map((p) => [p.shapeId, { id: p.shapeId, label: p.label }])).values(),
+]
