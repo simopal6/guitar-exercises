@@ -153,9 +153,11 @@ export function useScalePractice() {
     if (phase.value !== 'setup') return
     shapeId.value = id
     const matches = PATTERNS.filter((p) => p.shapeId === id)
-    // A shape with a single scale resolves on its own, same as the octave
-    // row below auto-resolving when there's only one complete octave.
-    patternId.value = matches.length === 1 ? matches[0].id : null
+    // "Forma" mode never asks which scale to play — it always uses the
+    // shape's primary (first-listed) scale. "Scala" mode shows a dedicated
+    // row to pick among a shape's scales, so it only pre-resolves when
+    // there's a single one and otherwise waits for selectScale().
+    patternId.value = mode.value === 'forma' ? (matches[0]?.id ?? null) : matches.length === 1 ? matches[0].id : null
     selectedOctaveIndex.value = 0
   }
 

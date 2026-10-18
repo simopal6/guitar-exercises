@@ -76,11 +76,31 @@ describe('useScalePractice', () => {
     expect(result.canStart.value).toBe(false)
   })
 
-  it('selecting a shape with a single scale resolves the pattern on its own', () => {
+  it('in "forma" mode, selecting a shape resolves its primary scale on its own, even when the shape offers more than one', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('forma')
-    result.selectShape(PATTERNS[0].shapeId)
+    result.selectShape(PATTERNS[0].shapeId) // "major-e-shape" now also offers Dorian — forma mode doesn't ask
     expect(result.patternId.value).toBe(PATTERNS[0].id)
+    expect(result.canStart.value).toBe(true)
+  })
+
+  it('in "scala" mode, selecting a shape with a single scale resolves the pattern on its own', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('scala')
+    result.selectShape(PATTERNS[1].shapeId) // "major-pentatonic", the shape with only one scale
+    expect(result.patternId.value).toBe(PATTERNS[1].id)
+    expect(result.canStart.value).toBe(true)
+  })
+
+  it('in "scala" mode, selecting a shape with more than one scale leaves the pattern unresolved until selectScale', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('scala')
+    result.selectShape('major-e-shape') // offers both Ionian and Dorian
+    expect(result.patternId.value).toBeNull()
+    expect(result.canStart.value).toBe(false)
+
+    result.selectScale('major-e-shape-dorian')
+    expect(result.patternId.value).toBe('major-e-shape-dorian')
     expect(result.canStart.value).toBe(true)
   })
 
@@ -194,6 +214,7 @@ describe('useScalePractice', () => {
     function setupScala(result: ReturnType<typeof useScalePractice>) {
       result.selectMode('scala')
       result.selectShape('major-e-shape') // "Scala maggiore (1)", the shape with two complete octaves
+      result.selectScale('major-e-shape') // Ionian — the shape now also offers Dorian, so the scale must be picked explicitly
     }
 
     it('finds the two complete octaves of "Scala maggiore (1)", defaulting to the first one', () => {

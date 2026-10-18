@@ -88,6 +88,16 @@ describe('PatternSetup', () => {
     expect(wrapper.emitted('select-scale')).toEqual([['major-e-shape-dorian']])
   })
 
+  it('with real data, "Scala maggiore (1)" now offers both Ionian (I) and Dorian (II)', () => {
+    const scalesForShape = PATTERNS.filter((p) => p.shapeId === 'major-e-shape')
+    expect(scalesForShape).toHaveLength(2)
+    const wrapper = mount(PatternSetup, {
+      props: { ...baseProps, mode: 'scala', shapeId: 'major-e-shape', scalesForShape },
+    })
+    expect(wrapper.text()).toContain('Ionian (I)')
+    expect(wrapper.text()).toContain('Dorian (II)')
+  })
+
   it('does not show an octave row when there is only one complete octave', () => {
     const wrapper = mount(PatternSetup, {
       props: { ...baseProps, mode: 'scala', completeOctaves: [{ lowMidi: 52, highMidi: 64 }] },

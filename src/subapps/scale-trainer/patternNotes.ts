@@ -1,5 +1,5 @@
 import type { FretPosition, Scale, Tuning } from '../../theory'
-import { positionToMidi, positionToNoteName, scaleDegree } from '../../theory'
+import { positionToMidi, positionToNoteName, scaleDegree, scaleDegreeIsFlat } from '../../theory'
 import { stringToIndex, type ScalePattern } from './pattern'
 import { colorForDegree } from './degreeColors'
 
@@ -8,6 +8,8 @@ export interface DerivedNote {
   fret: number
   noteName: string
   degree: number // 1..7
+  /** True for a degree flattened relative to the major scale (e.g. Dorian's b3/b7) — shown as a "b" marker, the color itself still follows the plain degree. */
+  flat: boolean
   color: string
   midi: number // used to order notes by pitch and to compute degree
 }
@@ -33,6 +35,7 @@ export function derivePatternNotes(pattern: ScalePattern, scale: Scale, tuning: 
       fret: position.fret,
       noteName: positionToNoteName(tuning, position),
       degree,
+      flat: scaleDegreeIsFlat(scale, midi - rootMidi),
       color: colorForDegree(degree),
       midi,
     }

@@ -127,18 +127,34 @@ watchEffect(() => {
       stroke-width="1.5"
     />
 
-    <circle
-      v-for="note in notes"
-      :key="`${note.stringIndex}-${note.fret}`"
-      :cx="stringX(note.stringIndex)"
-      :cy="fretDotY(note.fret)"
-      :r="note.midi === currentMidi ? CURRENT_DOT_RADIUS : DOT_RADIUS"
-      :style="{ fill: note.color }"
-      :stroke-width="DOT_STROKE_WIDTH"
-      :stroke-opacity="DOT_STROKE_OPACITY"
-      class="stroke-white dark:stroke-slate-950"
-      :aria-label="note.noteName"
-    />
+    <template v-for="note in notes" :key="`${note.stringIndex}-${note.fret}`">
+      <circle
+        :cx="stringX(note.stringIndex)"
+        :cy="fretDotY(note.fret)"
+        :r="note.midi === currentMidi ? CURRENT_DOT_RADIUS : DOT_RADIUS"
+        :style="{ fill: note.color }"
+        :stroke-width="DOT_STROKE_WIDTH"
+        :stroke-opacity="DOT_STROKE_OPACITY"
+        class="stroke-white dark:stroke-slate-950"
+        :aria-label="note.noteName"
+      />
+      <!-- Marks a flattened degree (e.g. Dorian's b3/b7) without touching its color, which stays keyed to the plain degree number.
+           White fill with a black outline (via stroke + paint-order) keeps "b" legible against any of the 7 degree colors. -->
+      <text
+        v-if="note.flat"
+        :x="stringX(note.stringIndex)"
+        :y="fretDotY(note.fret)"
+        text-anchor="middle"
+        dominant-baseline="central"
+        class="pointer-events-none select-none"
+        font-size="13"
+        font-weight="bold"
+        fill="white"
+        stroke="black"
+        stroke-width="3"
+        paint-order="stroke"
+      >b</text>
+    </template>
   </svg>
   </div>
 </template>

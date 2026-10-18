@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING } from '../../../theory'
+import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
@@ -79,7 +79,7 @@ describe('generateScaleBoxNotes', () => {
 
 describe('dropRedundantMarginNotes', () => {
   function note(partial: Partial<DerivedNote> & Pick<DerivedNote, 'fret' | 'midi'>): DerivedNote {
-    return { stringIndex: 0, noteName: '', degree: 1, color: '#000000', ...partial }
+    return { stringIndex: 0, noteName: '', degree: 1, flat: false, color: '#000000', ...partial }
   }
 
   it('drops a margin note whose pitch is already present inside the box', () => {
@@ -121,6 +121,48 @@ describe('major-pentatonic (same shape as "Scala maggiore (1)", degrees 4 and 7 
     const derived = derivePatternNotes(patternPentatonic, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING)
     for (const note of derived) {
       expect([1, 2, 3, 5, 6]).toContain(note.degree)
+    }
+  })
+})
+
+describe('major-e-shape-dorian (same shape as "Scala maggiore (1)", root on the 6th string\'s 4th finger)', () => {
+  const patternDorian = PATTERNS.find((p) => p.id === 'major-e-shape-dorian')!
+  const derived = derivePatternNotes(patternDorian, DORIAN_SCALE, STANDARD_TUNING)
+
+  function degreeAt(stringNumber: number, fret: number): DerivedNote {
+    const note = derived.find((n) => n.stringIndex === 6 - stringNumber && n.fret === fret)
+    expect(note).toBeDefined()
+    return note!
+  }
+
+  it('gives the root (6th string, 5th fret) degree 1, not flat', () => {
+    const root = degreeAt(6, 5)
+    expect(root.degree).toBe(1)
+    expect(root.flat).toBe(false)
+  })
+
+  it('marks the 3rd (b3) and 7th (b7) degrees flat, exactly as computed for this shape', () => {
+    // 5th string, 3rd fret and 3rd string, 5th fret: the minor-third-above-root positions (b3)
+    expect(degreeAt(5, 3)).toMatchObject({ degree: 3, flat: true })
+    expect(degreeAt(3, 5)).toMatchObject({ degree: 3, flat: true })
+    // 6th string 3rd fret, 4th string 5th fret, 1st string 3rd fret: the minor-seventh-above-root positions (b7) — in the Ionian reading of the same shape, these are the root itself
+    expect(degreeAt(6, 3)).toMatchObject({ degree: 7, flat: true })
+    expect(degreeAt(4, 5)).toMatchObject({ degree: 7, flat: true })
+    expect(degreeAt(1, 3)).toMatchObject({ degree: 7, flat: true })
+  })
+
+  it('leaves every other degree (shared with the Ionian reading of this shape) unflagged', () => {
+    for (const note of derived) {
+      if (note.degree === 3 || note.degree === 7) continue
+      expect(note.flat).toBe(false)
+    }
+  })
+
+  it('keeps the same color as the Ionian reading for every degree, flat or not', () => {
+    const ionian = derivePatternNotes(PATTERNS.find((p) => p.id === 'major-e-shape')!, MAJOR_SCALE, STANDARD_TUNING)
+    for (const note of derived) {
+      const sameDegreeIonianNote = ionian.find((n) => n.degree === note.degree)!
+      expect(note.color).toBe(sameDegreeIonianNote.color)
     }
   })
 })

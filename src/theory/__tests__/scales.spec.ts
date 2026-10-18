@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAJOR_SCALE, scaleDegree } from '../scales'
+import { DORIAN_SCALE, MAJOR_SCALE, scaleDegree, scaleDegreeIsFlat } from '../scales'
 
 describe('scaleDegree', () => {
   it('maps every semitone of the major scale formula to its 1-based degree', () => {
@@ -26,5 +26,32 @@ describe('scaleDegree', () => {
   it('throws for a note that does not belong to the scale', () => {
     expect(() => scaleDegree(MAJOR_SCALE, 1)).toThrow(RangeError) // minor second, not in major scale
     expect(() => scaleDegree(MAJOR_SCALE, 6)).toThrow(RangeError) // tritone, not in major scale
+  })
+})
+
+describe('scaleDegreeIsFlat', () => {
+  it('is false for every degree of the major scale, which has no flats', () => {
+    for (const semitones of MAJOR_SCALE.formula) {
+      expect(scaleDegreeIsFlat(MAJOR_SCALE, semitones)).toBe(false)
+    }
+  })
+
+  it('marks the Dorian 3rd and 7th as flat, matching its b3/b7 relative to the major scale', () => {
+    expect(scaleDegree(DORIAN_SCALE, 3)).toBe(3)
+    expect(scaleDegreeIsFlat(DORIAN_SCALE, 3)).toBe(true) // b3: minor third (3 semitones) vs major's 4
+
+    expect(scaleDegree(DORIAN_SCALE, 10)).toBe(7)
+    expect(scaleDegreeIsFlat(DORIAN_SCALE, 10)).toBe(true) // b7: minor seventh (10 semitones) vs major's 11
+  })
+
+  it('leaves the other Dorian degrees (shared with the major scale) unflagged', () => {
+    for (const semitones of [0, 2, 5, 7, 9]) {
+      expect(scaleDegreeIsFlat(DORIAN_SCALE, semitones)).toBe(false)
+    }
+  })
+
+  it('wraps octaves the same way scaleDegree does', () => {
+    expect(scaleDegreeIsFlat(DORIAN_SCALE, 3 + 12)).toBe(true)
+    expect(scaleDegreeIsFlat(DORIAN_SCALE, 0 - 12)).toBe(false)
   })
 })

@@ -10,7 +10,7 @@ const notesA = derivePatternNotes(patternA, MAJOR_SCALE, STANDARD_TUNING).sort((
 
 /** A minimal, synthetic note — not tied to any real pattern — for testing margin/stretch behavior in isolation. */
 function fakeNote(partial: Partial<DerivedNote> & Pick<DerivedNote, 'stringIndex' | 'fret' | 'midi'>): DerivedNote {
-  return { noteName: '', degree: 1, color: '#123456', ...partial }
+  return { noteName: '', degree: 1, flat: false, color: '#123456', ...partial }
 }
 
 describe('ScalePatternDiagram', () => {
@@ -114,6 +114,26 @@ describe('ScalePatternDiagram', () => {
       const circles = wrapper.findAll('circle')
       const highlightedCount = circles.filter((c) => Number(c.attributes('r')) > 13).length
       expect(highlightedCount).toBe(2)
+    })
+  })
+
+  describe('flat ("b") marker', () => {
+    it('draws no "b" text when no note is flat', () => {
+      const wrapper = mount(ScalePatternDiagram, { props: { notes: notesA, currentMidi: null, rootFret: patternA.root.fret, rootOffsetInBox: patternA.rootOffsetInBox } })
+      expect(wrapper.findAll('text').filter((t) => t.text() === 'b')).toHaveLength(0)
+    })
+
+    it('draws a "b" only on top of flat notes, same position as their dot', () => {
+      const flatNote = fakeNote({ stringIndex: 2, fret: 4, midi: 59, flat: true })
+      const naturalNote = fakeNote({ stringIndex: 3, fret: 2, midi: 57, flat: false })
+      const wrapper = mount(ScalePatternDiagram, {
+        props: { notes: [flatNote, naturalNote], currentMidi: null, rootFret: 3, rootOffsetInBox: 1 },
+      })
+      const bTexts = wrapper.findAll('text').filter((t) => t.text() === 'b')
+      expect(bTexts).toHaveLength(1)
+      const flatCircle = wrapper.findAll('circle')[0]
+      expect(bTexts[0].attributes('x')).toBe(flatCircle.attributes('cx'))
+      expect(bTexts[0].attributes('y')).toBe(flatCircle.attributes('cy'))
     })
   })
 
