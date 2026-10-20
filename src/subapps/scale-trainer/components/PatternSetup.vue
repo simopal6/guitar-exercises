@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { SHAPES } from '../patterns'
+import { PATTERNS, SHAPES } from '../patterns'
 import { octaveLabel } from '../octaves'
 import type { PracticeMode } from '../composables/useScalePractice'
 import type { ScaleOctave } from '../octaves'
-import type { ScalePattern } from '../pattern'
 
 defineProps<{
   mode: PracticeMode | null
   shapeId: string | null
   patternId: string | null
-  scalesForShape: ScalePattern[]
   completeOctaves: ScaleOctave[]
   selectedOctaveIndex: number
   patternBpmPreview: number
@@ -56,7 +54,7 @@ function pillClass(active: boolean, disabled = false): string {
       </div>
     </div>
 
-    <div v-if="mode !== null">
+    <div v-if="mode === 'forma'">
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Forma</p>
       <div class="flex flex-wrap gap-2">
         <button
@@ -72,11 +70,11 @@ function pillClass(active: boolean, disabled = false): string {
       </div>
     </div>
 
-    <div v-if="mode === 'scala' && shapeId !== null">
+    <div v-if="mode === 'scala'">
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Scala</p>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="pattern in scalesForShape"
+          v-for="pattern in PATTERNS"
           :key="pattern.id"
           type="button"
           class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"

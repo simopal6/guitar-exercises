@@ -84,24 +84,31 @@ describe('useScalePractice', () => {
     expect(result.canStart.value).toBe(true)
   })
 
-  it('in "scala" mode, selecting a shape with a single scale resolves the pattern on its own', () => {
+  it('in "scala" mode, selectScale picks directly from any scale, with no shape question first', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
-    result.selectShape(PATTERNS[1].shapeId) // "major-pentatonic", the shape with only one scale
-    expect(result.patternId.value).toBe(PATTERNS[1].id)
+    expect(result.shapeId.value).toBeNull() // no "Forma" row/step in this mode
+    result.selectScale('major-e-shape-dorian') // Dorian, without ever picking "Scala maggiore (1)" as a shape
+    expect(result.patternId.value).toBe('major-e-shape-dorian')
+    expect(result.shapeId.value).toBe('major-e-shape') // bookkeeping only, derived from the chosen scale
     expect(result.canStart.value).toBe(true)
   })
 
-  it('in "scala" mode, selecting a shape with more than one scale leaves the pattern unresolved until selectScale', () => {
+  it('in "scala" mode, selectScale can pick a scale belonging to a different shape right after another, with no shape step in between', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
-    result.selectShape('major-e-shape') // offers both Ionian and Dorian
-    expect(result.patternId.value).toBeNull()
-    expect(result.canStart.value).toBe(false)
+    result.selectScale('major-e-shape') // Ionian
+    expect(result.patternId.value).toBe('major-e-shape')
+    result.selectScale('major-pentatonic')
+    expect(result.patternId.value).toBe('major-pentatonic')
+    expect(result.shapeId.value).toBe('major-pentatonic')
+  })
 
-    result.selectScale('major-e-shape-dorian')
-    expect(result.patternId.value).toBe('major-e-shape-dorian')
-    expect(result.canStart.value).toBe(true)
+  it('selectScale is a no-op for an unknown id', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('scala')
+    result.selectScale('does-not-exist')
+    expect(result.patternId.value).toBeNull()
   })
 
   it('changing mode resets the shape and pattern already chosen', () => {
@@ -206,6 +213,7 @@ describe('useScalePractice', () => {
     await result.start()
     result.selectMode('scala')
     result.selectShape(PATTERNS[1].shapeId)
+    result.selectScale('major-e-shape-dorian')
     expect(result.mode.value).toBe('forma')
     expect(result.patternId.value).toBe(PATTERNS[0].id)
   })
@@ -213,8 +221,7 @@ describe('useScalePractice', () => {
   describe('"scala" mode (one root-to-root octave)', () => {
     function setupScala(result: ReturnType<typeof useScalePractice>) {
       result.selectMode('scala')
-      result.selectShape('major-e-shape') // "Scala maggiore (1)", the shape with two complete octaves
-      result.selectScale('major-e-shape') // Ionian — the shape now also offers Dorian, so the scale must be picked explicitly
+      result.selectScale('major-e-shape') // Ionian, picked directly — no shape step in "scala" mode
     }
 
     it('finds the two complete octaves of "Scala maggiore (1)", defaulting to the first one', () => {
