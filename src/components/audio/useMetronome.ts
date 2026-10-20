@@ -42,7 +42,15 @@ export function useMetronome(initialBpm: number): Metronome {
   let loop: import('tone').Loop | null = null
 
   async function ensureEngine(): Promise<typeof import('tone')> {
-    if (!Tone) Tone = await import('tone')
+    if (!Tone) {
+      Tone = await import('tone')
+      // Default lookAhead (0.1s) leaves little margin for the main thread's
+      // own jitter (WebKit/iOS Safari especially) to fall behind — at high
+      // bpm the gap between clicks shrinks enough that even a brief stall
+      // becomes audible as drift. Widening it trades a little fixed,
+      // inaudible latency for steadier long-term timing.
+      Tone.getContext().lookAhead = 0.2
+    }
     await Tone.start() // no-op if the context is already running
     if (!synth) {
       // Bright, metallic percussive hit (the same synthesis technique often

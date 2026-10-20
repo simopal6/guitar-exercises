@@ -29,6 +29,7 @@ vi.mock('tone', () => {
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
+    getContext: () => ({ lookAhead: 0.1 }),
     Transport,
     MetalSynth,
     Loop,
