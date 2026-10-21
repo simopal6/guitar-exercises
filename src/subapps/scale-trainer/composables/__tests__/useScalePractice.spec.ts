@@ -179,7 +179,7 @@ describe('useScalePractice', () => {
     first.adjustBpm(2) // 80 -> 100
     first.stop()
 
-    first.selectShape(PATTERNS[1].shapeId)
+    first.selectShape('major-pentatonic') // a genuinely different shape, whatever PATTERNS' own order is
     await first.start()
     expect(first.bpm.value).toBe(80) // never touched before, falls back to the default
   })
@@ -190,7 +190,7 @@ describe('useScalePractice', () => {
     result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     result.selectMode('scala')
-    result.selectShape(PATTERNS[1].shapeId)
+    result.selectShape('major-pentatonic')
     result.selectScale('major-e-shape-dorian')
     expect(result.mode.value).toBe('forma')
     expect(result.patternId.value).toBe(PATTERNS[0].id)

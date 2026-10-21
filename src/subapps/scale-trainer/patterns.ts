@@ -82,8 +82,8 @@ const patternPentatonic: ScalePattern = {
   ],
 }
 
-/** Every pattern the app knows about — add new patterns here as they're written. */
-export const PATTERNS: ScalePattern[] = [patternA, patternPentatonic, patternDorian]
+/** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Scala" row lists them in. */
+export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPentatonic]
 
 export interface ScaleShape {
   id: string

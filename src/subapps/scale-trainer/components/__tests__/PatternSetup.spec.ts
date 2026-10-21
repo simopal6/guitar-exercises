@@ -39,7 +39,8 @@ describe('PatternSetup', () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'forma' } })
       const shapeButton = wrapper.findAll('button').find((b) => b.text() === 'Pentatonica')!
       await shapeButton.trigger('click')
-      expect(wrapper.emitted('select-shape')).toEqual([[PATTERNS[1].shapeId]])
+      const pentatonicShapeId = PATTERNS.find((p) => p.label === 'Pentatonica')!.shapeId
+      expect(wrapper.emitted('select-shape')).toEqual([[pentatonicShapeId]])
     })
 
     it('does not show a "Scala" row at all — forma mode never asks which scale to play', () => {
