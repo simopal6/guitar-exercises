@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import { useScalePractice } from '../useScalePractice'
 import { getPatternTempo } from '../../patternTempoStore'
 import { PATTERNS } from '../../patterns'
-import { buildUpDownSequence } from '../../sequence'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
@@ -52,11 +51,6 @@ function withSetup<T>(composable: () => T): { result: T; unmount: () => void } {
 
 function tick() {
   ;(Tone as unknown as { __getLastLoop: () => { callback: (t: number) => void } }).__getLastLoop().callback(0)
-}
-
-/** Mirrors useScalePractice's own distinctMidis: notes are already pitch-sorted, so Set insertion order is ascending. */
-function distinctMidis(notes: { midi: number }[]): number[] {
-  return [...new Set(notes.map((n) => n.midi))]
 }
 
 beforeEach(() => {
@@ -121,57 +115,40 @@ describe('useScalePractice', () => {
     expect(result.patternId.value).toBeNull()
   })
 
-  it('start() moves to running and highlights the first pitch of the up/down sequence', async () => {
+  it('start() moves to running', async () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('forma')
     result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     expect(result.phase.value).toBe('running')
-    const midis = distinctMidis(result.notes.value)
-    const expectedSequence = buildUpDownSequence(midis.length)
-    expect(result.currentMidi.value).toBe(midis[expectedSequence[0]])
   })
 
-  it('advances the highlighted pitch by one step on each metronome beat', async () => {
+  // The dot animation (advancing currentMidi on each metronome beat) is
+  // temporarily disabled — see DOT_ANIMATION_ENABLED in useScalePractice.ts —
+  // because it was found to contribute to audio drift at high bpm on iOS
+  // Safari. currentMidi stays null throughout practice until it's
+  // re-enabled; buildUpDownSequence itself is still covered by its own
+  // sequence.spec.ts regardless.
+  it('currentMidi stays null across metronome beats while the dot animation is disabled', async () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('forma')
     result.selectShape(PATTERNS[0].shapeId)
     await result.start()
-    const midis = distinctMidis(result.notes.value)
-    const sequence = buildUpDownSequence(midis.length)
+    expect(result.currentMidi.value).toBeNull()
 
     tick()
-    expect(result.currentMidi.value).toBe(midis[sequence[1]])
-
     tick()
-    expect(result.currentMidi.value).toBe(midis[sequence[2]])
+    expect(result.currentMidi.value).toBeNull()
   })
 
-  it('loops the sequence around without stopping', async () => {
-    const { result } = withSetup(useScalePractice)
-    result.selectMode('forma')
-    result.selectShape(PATTERNS[0].shapeId)
-    await result.start()
-    const midis = distinctMidis(result.notes.value)
-    const sequence = buildUpDownSequence(midis.length)
-
-    for (let i = 0; i < sequence.length; i++) tick()
-    // back to the start of the next period
-    expect(result.currentMidi.value).toBe(midis[sequence[0]])
-  })
-
-  it('stop() returns to setup and further beats no longer advance the note', async () => {
+  it('stop() returns to setup', async () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('forma')
     result.selectShape(PATTERNS[0].shapeId)
     await result.start()
     tick()
-    const midiAtStop = result.currentMidi.value
     result.stop()
     expect(result.phase.value).toBe('setup')
-
-    tick()
-    expect(result.currentMidi.value).toBe(midiAtStop) // no longer subscribed
   })
 
   it('adjustBpm persists the new tempo for the current pattern', async () => {
@@ -236,39 +213,26 @@ describe('useScalePractice', () => {
       expect(result.selectedOctaveIndex.value).toBe(0)
     })
 
-    it('steps only through the chosen octave, starting and ending exactly on its root', async () => {
+    // Which pitches get stepped through (stepMidis, filtered to the chosen
+    // octave) is unaffected by the dot animation being disabled — only
+    // currentMidi (the visual highlight) stays null while it is.
+    it('running with an octave selected still leaves currentMidi null, like "forma" mode', async () => {
       const { result } = withSetup(useScalePractice)
       setupScala(result)
       await result.start()
+      expect(result.currentMidi.value).toBeNull()
 
-      const octave = result.completeOctaves.value[0]
-      const octaveMidis = [...new Set(result.notes.value.map((n) => n.midi))].filter(
-        (m) => m >= octave.lowMidi && m <= octave.highMidi,
-      )
-      const sequence = buildUpDownSequence(octaveMidis.length)
-
-      // first step is the low root
-      expect(result.currentMidi.value).toBe(octave.lowMidi)
-
-      // walk a whole period: every step stays within the octave, and the top of the "up" leg is the high root
-      for (let i = 1; i < sequence.length; i++) {
-        tick()
-        expect(result.currentMidi.value).toBeGreaterThanOrEqual(octave.lowMidi)
-        expect(result.currentMidi.value).toBeLessThanOrEqual(octave.highMidi)
-      }
-      // back to the low root at the start of the next period
       tick()
-      expect(result.currentMidi.value).toBe(octave.lowMidi)
+      expect(result.currentMidi.value).toBeNull()
     })
 
-    it('switching to the other octave changes which pitches are stepped through', async () => {
+    it('switching to the other octave still changes which complete octave is selected', async () => {
       const { result } = withSetup(useScalePractice)
       setupScala(result)
       result.selectOctave(1)
+      expect(result.selectedOctaveIndex.value).toBe(1)
       await result.start()
-
-      const octave = result.completeOctaves.value[1]
-      expect(result.currentMidi.value).toBe(octave.lowMidi)
+      expect(result.currentMidi.value).toBeNull()
     })
 
     it('selectOctave is a no-op once running', async () => {
