@@ -265,6 +265,40 @@ describe('useChordPairExercise', () => {
     expect(result.currentPair.value).toBe(pairBefore) // no stray tick revived it
   })
 
+  it('skip() immediately draws a new pair, without waiting for the rest of the active turn', async () => {
+    const { result } = withSetup(() => useChordPairExercise({ turnDurationSeconds: 60, gapSeconds: 2 }))
+    result.setSelectedList(threeChordList)
+    await result.start()
+    const [a, b] = result.currentPair.value!
+
+    result.skip()
+
+    expect(result.turnState.value).toBe('active')
+    expect(result.remainingSeconds.value).toBe(60)
+    const [newA, newB] = result.currentPair.value!
+    expect([newA.id, newB.id].sort()).not.toEqual([a.id, b.id].sort())
+  })
+
+  it('skip() cuts the gap short too, jumping straight into a new active turn', async () => {
+    const { result } = withSetup(() => useChordPairExercise({ turnDurationSeconds: 10, gapSeconds: 60 }))
+    result.setSelectedList(threeChordList)
+    await result.start()
+    await vi.advanceTimersByTimeAsync(10_000) // end of turn -> gap
+    expect(result.turnState.value).toBe('gap')
+
+    result.skip()
+
+    expect(result.turnState.value).toBe('active')
+    expect(result.remainingSeconds.value).toBe(10)
+  })
+
+  it('skip() is a no-op in setup, before the exercise has started', () => {
+    const { result } = withSetup(() => useChordPairExercise())
+    result.setSelectedList(threeChordList)
+    result.skip()
+    expect(result.currentPair.value).toBeNull()
+  })
+
   it('setSelectedList/setTurnDuration/setBaseBpm are no-ops once running', async () => {
     const { result } = withSetup(() => useChordPairExercise({ turnDurationSeconds: 60 }))
     result.setSelectedList(threeChordList)

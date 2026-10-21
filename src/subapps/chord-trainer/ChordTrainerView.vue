@@ -27,6 +27,7 @@ const {
   setBaseBpm,
   start,
   stop,
+  skip,
   adjustBpm,
 } = useChordPairExercise()
 
@@ -98,6 +99,7 @@ function onSelectList(id: string) {
         :remaining-seconds="remainingSeconds"
         :turn-state="turnState"
         :fingering-revealed="fingeringRevealed"
+        @skip="skip"
       />
       <MetronomeControl :bpm="bpm" @adjust="adjustBpm" />
       <button

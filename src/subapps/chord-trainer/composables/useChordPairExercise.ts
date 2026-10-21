@@ -147,6 +147,13 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     timer = setInterval(tick, TICK_MS)
   }
 
+  /** Jumps straight to a new pair, skipping whatever's left of the active turn or the gap — no count-in, no waiting. */
+  function skip() {
+    if (phase.value !== 'running') return
+    startTurn()
+    tick() // refresh remainingSeconds/fingeringRevealed now, instead of leaving them stale until the next interval tick
+  }
+
   function stop() {
     clearTimer()
     metronome.stop()
@@ -218,6 +225,7 @@ export function useChordPairExercise(options: ChordPairExerciseOptions = {}) {
     setBaseBpm,
     start,
     stop,
+    skip,
     adjustBpm,
   }
 }

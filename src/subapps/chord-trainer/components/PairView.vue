@@ -8,6 +8,10 @@ defineProps<{
   turnState: 'active' | 'gap'
   fingeringRevealed: boolean
 }>()
+
+const emit = defineEmits<{
+  skip: []
+}>()
 </script>
 
 <template>
@@ -17,6 +21,14 @@ defineProps<{
       <span v-else>Tempo rimasto</span>
       <span class="ml-1 font-mono text-base font-semibold text-slate-800 dark:text-slate-100">{{ remainingSeconds }}s</span>
     </p>
+
+    <button
+      type="button"
+      class="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+      @click="emit('skip')"
+    >
+      Salta
+    </button>
 
     <div class="grid w-full grid-cols-2 gap-4">
       <div v-for="chord in pair" :key="chord.id" class="flex items-center justify-center">
