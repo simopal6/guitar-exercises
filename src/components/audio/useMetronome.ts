@@ -15,6 +15,13 @@ export interface Metronome {
 
 const MIN_BPM = 20 // technical floor only, per spec — no pedagogical minimum/maximum
 
+// Fixed so the click sounds the same at every bpm. 16/3 Hz keeps the timbre
+// players were used to at the default 80 bpm.
+const CLICK_FREQUENCY = 16 / 3
+// Longer than the envelope's attack + decay (sustain is 0), so it doesn't
+// shorten the sound — it only has to end before the next click.
+const CLICK_DURATION_SECONDS = 0.1
+
 /** Exported so per-item tempo persistence (chordTempoStore, patternTempoStore, ...) stays consistent with what the metronome can actually play. */
 export function clampBpm(bpm: number): number {
   return Math.max(MIN_BPM, Math.round(bpm))
@@ -42,15 +49,7 @@ export function useMetronome(initialBpm: number): Metronome {
   let loop: import('tone').Loop | null = null
 
   async function ensureEngine(): Promise<typeof import('tone')> {
-    if (!Tone) {
-      Tone = await import('tone')
-      // Default lookAhead (0.1s) leaves little margin for the main thread's
-      // own jitter (WebKit/iOS Safari especially) to fall behind — at high
-      // bpm the gap between clicks shrinks enough that even a brief stall
-      // becomes audible as drift. Widening it trades a little fixed,
-      // inaudible latency for steadier long-term timing.
-      Tone.getContext().lookAhead = 0.2
-    }
+    if (!Tone) Tone = await import('tone')
     await Tone.start() // no-op if the context is already running
     if (!synth) {
       // Bright, metallic percussive hit (the same synthesis technique often
@@ -68,7 +67,11 @@ export function useMetronome(initialBpm: number): Metronome {
       // milliseconds: Transport recomputes real-world tick times from its
       // own bpm, so the Loop callback never needs to know the current bpm.
       loop = new Tone.Loop((time) => {
-        synth?.triggerAttackRelease('16n', time)
+        // MetalSynth is Monophonic: the signature is (note, duration, time).
+        // `time` MUST be the third argument — without it Tone plays the click
+        // whenever this callback happens to run, quantized to the clock's
+        // update interval, which is audible as irregular beats at high bpm.
+        synth?.triggerAttackRelease(CLICK_FREQUENCY, CLICK_DURATION_SECONDS, time)
         for (const listener of beatListeners) listener()
       }, '4n')
     }

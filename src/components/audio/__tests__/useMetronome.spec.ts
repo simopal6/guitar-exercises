@@ -6,9 +6,13 @@ vi.mock('tone', () => {
     start: vi.fn(),
     stop: vi.fn(),
   }
+  let lastSynth: InstanceType<typeof MetalSynth> | null = null
   class MetalSynth {
     triggerAttackRelease = vi.fn()
     dispose = vi.fn()
+    constructor() {
+      lastSynth = this
+    }
     toDestination() {
       return this
     }
@@ -28,11 +32,11 @@ vi.mock('tone', () => {
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
-    getContext: () => ({ lookAhead: 0.1 }),
     Transport,
     MetalSynth,
     Loop,
     __getLastLoop: () => lastLoop,
+    __getLastSynth: () => lastSynth,
   }
 })
 
@@ -85,6 +89,27 @@ describe('useMetronome', () => {
     metronome.dispose()
     expect(Tone.Transport.stop).toHaveBeenCalled()
     expect(metronome.isRunning.value).toBe(false)
+  })
+
+  it('schedules each click at the exact time the Loop passes in, at a fixed pitch and duration', async () => {
+    const Tone = (await import('tone')) as unknown as {
+      __getLastLoop: () => { callback: (t: number) => void }
+      __getLastSynth: () => { triggerAttackRelease: ReturnType<typeof vi.fn> }
+    }
+    const metronome = useMetronome(200)
+    await metronome.start()
+
+    Tone.__getLastLoop().callback(12.5)
+    metronome.setBpm(60)
+    Tone.__getLastLoop().callback(13.5)
+
+    const calls = Tone.__getLastSynth().triggerAttackRelease.mock.calls
+    // MetalSynth's signature is (note, duration, time): the scheduled time must be the 3rd argument
+    expect(calls[0][2]).toBe(12.5)
+    expect(calls[1][2]).toBe(13.5)
+    // pitch and duration don't depend on bpm
+    expect(calls[1][0]).toBe(calls[0][0])
+    expect(calls[1][1]).toBe(calls[0][1])
   })
 
   describe('onBeat', () => {
