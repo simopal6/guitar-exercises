@@ -7,6 +7,12 @@ vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
   class Filter {
     dispose = vi.fn()
+    connect() {
+      return this
+    }
+  }
+  class Limiter {
+    dispose = vi.fn()
     toDestination() {
       return this
     }
@@ -39,6 +45,7 @@ vi.mock('tone', () => {
     start: vi.fn().mockResolvedValue(undefined),
     Transport,
     Filter,
+    Limiter,
     Loop,
     Synth,
     Frequency: vi.fn(() => ({ toFrequency: () => 440 })),

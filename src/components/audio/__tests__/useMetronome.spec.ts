@@ -20,6 +20,12 @@ vi.mock('tone', () => {
   }
   class Filter {
     dispose = vi.fn()
+    connect() {
+      return this
+    }
+  }
+  class Limiter {
+    dispose = vi.fn()
     toDestination() {
       return this
     }
@@ -42,6 +48,7 @@ vi.mock('tone', () => {
     Transport,
     Synth,
     Filter,
+    Limiter,
     Loop,
     __getLastLoop: () => lastLoop,
     __getLastSynth: () => lastSynth,

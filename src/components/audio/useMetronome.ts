@@ -15,13 +15,16 @@ export interface Metronome {
 
 const MIN_BPM = 20 // technical floor only, per spec — no pedagogical minimum/maximum
 
-// "Legno": a short woodblock-like tok — a triangle wave with the highs
+// "Legno forte": a short woodblock-like tok — a triangle wave with the highs
 // rounded off by a lowpass filter. Fixed pitch and duration, so it sounds
-// the same at every bpm.
-const CLICK_NOTE = 'E5'
-const CLICK_DURATION_SECONDS = 0.05
-const CLICK_FILTER_HZ = 1800
-const CLICK_VOLUME_DB = 2
+// the same at every bpm. The gain pushes it past full scale on purpose; the
+// limiter brings the peak back down so it's louder without clipping.
+const CLICK_NOTE = 'A5'
+const CLICK_DECAY_SECONDS = 0.08
+const CLICK_DURATION_SECONDS = CLICK_DECAY_SECONDS + 0.005
+const CLICK_FILTER_HZ = 3000
+const CLICK_VOLUME_DB = 10
+const CLICK_LIMITER_DB = -1
 
 /** Exported so per-item tempo persistence (chordTempoStore, patternTempoStore, ...) stays consistent with what the metronome can actually play. */
 export function clampBpm(bpm: number): number {
@@ -48,16 +51,18 @@ export function useMetronome(initialBpm: number): Metronome {
   let Tone: typeof import('tone') | null = null
   let synth: import('tone').Synth | null = null
   let filter: import('tone').Filter | null = null
+  let limiter: import('tone').Limiter | null = null
   let loop: import('tone').Loop | null = null
 
   async function ensureEngine(): Promise<typeof import('tone')> {
     if (!Tone) Tone = await import('tone')
     await Tone.start() // no-op if the context is already running
     if (!synth) {
-      filter = new Tone.Filter(CLICK_FILTER_HZ, 'lowpass').toDestination()
+      limiter = new Tone.Limiter(CLICK_LIMITER_DB).toDestination()
+      filter = new Tone.Filter(CLICK_FILTER_HZ, 'lowpass').connect(limiter)
       synth = new Tone.Synth({
         oscillator: { type: 'triangle' },
-        envelope: { attack: 0.001, decay: 0.045, sustain: 0, release: 0.02 },
+        envelope: { attack: 0.001, decay: CLICK_DECAY_SECONDS, sustain: 0, release: 0.02 },
       }).connect(filter)
       synth.volume.value = CLICK_VOLUME_DB
     }
@@ -107,9 +112,11 @@ export function useMetronome(initialBpm: number): Metronome {
     loop?.dispose()
     synth?.dispose()
     filter?.dispose()
+    limiter?.dispose()
     loop = null
     synth = null
     filter = null
+    limiter = null
     Tone = null
     beatListeners.clear()
   }
