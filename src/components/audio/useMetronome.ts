@@ -15,12 +15,13 @@ export interface Metronome {
 
 const MIN_BPM = 20 // technical floor only, per spec — no pedagogical minimum/maximum
 
-// Fixed so the click sounds the same at every bpm. 16/3 Hz keeps the timbre
-// players were used to at the default 80 bpm.
-const CLICK_FREQUENCY = 16 / 3
-// Longer than the envelope's attack + decay (sustain is 0), so it doesn't
-// shorten the sound — it only has to end before the next click.
-const CLICK_DURATION_SECONDS = 0.1
+// "Legno": a short woodblock-like tok — a triangle wave with the highs
+// rounded off by a lowpass filter. Fixed pitch and duration, so it sounds
+// the same at every bpm.
+const CLICK_NOTE = 'E5'
+const CLICK_DURATION_SECONDS = 0.05
+const CLICK_FILTER_HZ = 1800
+const CLICK_VOLUME_DB = 2
 
 /** Exported so per-item tempo persistence (chordTempoStore, patternTempoStore, ...) stays consistent with what the metronome can actually play. */
 export function clampBpm(bpm: number): number {
@@ -45,33 +46,30 @@ export function useMetronome(initialBpm: number): Metronome {
   const beatListeners = new Set<() => void>()
 
   let Tone: typeof import('tone') | null = null
-  let synth: import('tone').MetalSynth | null = null
+  let synth: import('tone').Synth | null = null
+  let filter: import('tone').Filter | null = null
   let loop: import('tone').Loop | null = null
 
   async function ensureEngine(): Promise<typeof import('tone')> {
     if (!Tone) Tone = await import('tone')
     await Tone.start() // no-op if the context is already running
     if (!synth) {
-      // Bright, metallic percussive hit (the same synthesis technique often
-      // used for hi-hats) — short and inharmonic, reads as a crisp "tick".
-      synth = new Tone.MetalSynth({
-        envelope: { attack: 0.001, decay: 0.08, release: 0.01 },
-        harmonicity: 5.1,
-        modulationIndex: 32,
-        resonance: 4000,
-        octaves: 1.5,
-      }).toDestination()
+      filter = new Tone.Filter(CLICK_FILTER_HZ, 'lowpass').toDestination()
+      synth = new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.001, decay: 0.045, sustain: 0, release: 0.02 },
+      }).connect(filter)
+      synth.volume.value = CLICK_VOLUME_DB
     }
     if (!loop) {
       // Interval given in musical time ('4n' = one quarter note), not
       // milliseconds: Transport recomputes real-world tick times from its
       // own bpm, so the Loop callback never needs to know the current bpm.
       loop = new Tone.Loop((time) => {
-        // MetalSynth is Monophonic: the signature is (note, duration, time).
-        // `time` MUST be the third argument — without it Tone plays the click
-        // whenever this callback happens to run, quantized to the clock's
-        // update interval, which is audible as irregular beats at high bpm.
-        synth?.triggerAttackRelease(CLICK_FREQUENCY, CLICK_DURATION_SECONDS, time)
+        // Signature is (note, duration, time). `time` MUST be passed — without
+        // it Tone plays the click whenever this callback happens to run,
+        // quantized to the clock's update interval: audibly irregular at high bpm.
+        synth?.triggerAttackRelease(CLICK_NOTE, CLICK_DURATION_SECONDS, time)
         for (const listener of beatListeners) listener()
       }, '4n')
     }
@@ -108,8 +106,10 @@ export function useMetronome(initialBpm: number): Metronome {
     stop()
     loop?.dispose()
     synth?.dispose()
+    filter?.dispose()
     loop = null
     synth = null
+    filter = null
     Tone = null
     beatListeners.clear()
   }

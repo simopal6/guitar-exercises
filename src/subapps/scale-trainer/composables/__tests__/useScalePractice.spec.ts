@@ -6,8 +6,15 @@ import { PATTERNS } from '../../patterns'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
-  class MetalSynth {
+  class Synth {
     triggerAttackRelease = vi.fn()
+    dispose = vi.fn()
+    volume = { value: 0 }
+    connect() {
+      return this
+    }
+  }
+  class Filter {
     dispose = vi.fn()
     toDestination() {
       return this
@@ -29,7 +36,8 @@ vi.mock('tone', () => {
   return {
     start: vi.fn().mockResolvedValue(undefined),
     Transport,
-    MetalSynth,
+    Synth,
+    Filter,
     Loop,
     __getLastLoop: () => lastLoop,
   }

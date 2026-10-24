@@ -5,8 +5,7 @@ import { getChordTempo, setChordTempo } from '../../chordTempoStore'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
-  class MetalSynth {
-    triggerAttackRelease = vi.fn()
+  class Filter {
     dispose = vi.fn()
     toDestination() {
       return this
@@ -24,17 +23,22 @@ vi.mock('tone', () => {
     }
   }
   const synthTriggerAttackRelease = vi.fn()
+  // Shared by the metronome's click and the turn-end note; the Loop never fires here, so only the turn-end note calls it.
   class Synth {
     triggerAttackRelease = synthTriggerAttackRelease
     dispose = vi.fn()
+    volume = { value: 0 }
     toDestination() {
+      return this
+    }
+    connect() {
       return this
     }
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
     Transport,
-    MetalSynth,
+    Filter,
     Loop,
     Synth,
     Frequency: vi.fn(() => ({ toFrequency: () => 440 })),

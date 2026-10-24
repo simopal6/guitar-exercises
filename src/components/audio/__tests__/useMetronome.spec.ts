@@ -6,13 +6,20 @@ vi.mock('tone', () => {
     start: vi.fn(),
     stop: vi.fn(),
   }
-  let lastSynth: InstanceType<typeof MetalSynth> | null = null
-  class MetalSynth {
+  let lastSynth: InstanceType<typeof Synth> | null = null
+  class Synth {
     triggerAttackRelease = vi.fn()
     dispose = vi.fn()
+    volume = { value: 0 }
     constructor() {
       lastSynth = this
     }
+    connect() {
+      return this
+    }
+  }
+  class Filter {
+    dispose = vi.fn()
     toDestination() {
       return this
     }
@@ -33,7 +40,8 @@ vi.mock('tone', () => {
   return {
     start: vi.fn().mockResolvedValue(undefined),
     Transport,
-    MetalSynth,
+    Synth,
+    Filter,
     Loop,
     __getLastLoop: () => lastLoop,
     __getLastSynth: () => lastSynth,
@@ -104,7 +112,7 @@ describe('useMetronome', () => {
     Tone.__getLastLoop().callback(13.5)
 
     const calls = Tone.__getLastSynth().triggerAttackRelease.mock.calls
-    // MetalSynth's signature is (note, duration, time): the scheduled time must be the 3rd argument
+    // Synth's signature is (note, duration, time): the scheduled time must be the 3rd argument
     expect(calls[0][2]).toBe(12.5)
     expect(calls[1][2]).toBe(13.5)
     // pitch and duration don't depend on bpm
