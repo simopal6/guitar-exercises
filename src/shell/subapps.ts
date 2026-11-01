@@ -3,6 +3,7 @@ import type { Component } from 'vue'
 /**
  * A sub-app is fully described here: adding a future one (ear-training,
  * fretboard note-finder) is just a new entry, lazy-loaded via dynamic import.
+ * Order matters: it's the tab bar order, and the first entry is where "/" lands.
  */
 export interface SubAppDefinition {
   id: string
@@ -13,13 +14,6 @@ export interface SubAppDefinition {
 }
 
 export const subApps: SubAppDefinition[] = [
-  {
-    id: 'interval-trainer',
-    title: 'Intervalli',
-    path: '/intervals',
-    icon: '🎵',
-    component: () => import('../subapps/interval-trainer/IntervalTrainerView.vue'),
-  },
   {
     id: 'chord-trainer',
     title: 'Accordi',
@@ -33,6 +27,13 @@ export const subApps: SubAppDefinition[] = [
     path: '/scales',
     icon: '🪜',
     component: () => import('../subapps/scale-trainer/ScaleTrainerView.vue'),
+  },
+  {
+    id: 'interval-trainer',
+    title: 'Intervalli',
+    path: '/intervals',
+    icon: '🎵',
+    component: () => import('../subapps/interval-trainer/IntervalTrainerView.vue'),
   },
   {
     id: 'song-trainer',
