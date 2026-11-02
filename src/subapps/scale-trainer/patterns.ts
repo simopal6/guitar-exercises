@@ -1,9 +1,9 @@
-import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE } from '../../theory'
+import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE } from '../../theory'
 import type { ScalePattern, ScalePatternNote } from './pattern'
 
 const patternARoot: ScalePatternNote = { string: 6, fret: 3 }
 
-/** Every position of this shape — identical for the Ionian and Dorian readings of it, only the root (and so the degrees/colors) differs. */
+/** Every position of this shape — identical for the Ionian, Dorian and Phrygian readings of it, only the root (and so the degrees/colors) differs. */
 const shapeANotes: ScalePatternNote[] = [
   { string: 6, fret: 2 },
   { string: 6, fret: 3 },
@@ -47,9 +47,24 @@ const patternDorian: ScalePattern = {
   shapeId: 'major-e-shape',
   scaleId: DORIAN_SCALE.id,
   label: 'Scala maggiore (1)',
-  scaleLabel: 'Dorian (II)',
+  scaleLabel: 'Dorian (ii)',
   root: { string: 6, fret: 5 },
   rootOffsetInBox: 3, // root is the box's 4th fret (box = [2,5] for this root)
+  notes: shapeANotes,
+}
+
+/**
+ * Same shape again, read from its 3rd degree (5th string, 1st finger) — the
+ * major scale's Phrygian mode: degrees 2, 3, 6 and 7 marked flat.
+ */
+const patternPhrygian: ScalePattern = {
+  id: 'major-e-shape-phrygian',
+  shapeId: 'major-e-shape',
+  scaleId: PHRYGIAN_SCALE.id,
+  label: 'Scala maggiore (1)',
+  scaleLabel: 'Phrygian (iii)',
+  root: { string: 5, fret: 2 },
+  rootOffsetInBox: 0, // root is the box's 1st fret (box = [2,5] for this root)
   notes: shapeANotes,
 }
 
@@ -83,7 +98,7 @@ const patternPentatonic: ScalePattern = {
 }
 
 /** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Scala" row lists them in. */
-export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPentatonic]
+export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPhrygian, patternPentatonic]
 
 export interface ScaleShape {
   id: string

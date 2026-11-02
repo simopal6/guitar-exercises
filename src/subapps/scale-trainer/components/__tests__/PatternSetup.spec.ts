@@ -62,7 +62,7 @@ describe('PatternSetup', () => {
 
     it('emits select-scale (not select-shape) when a scale pill is clicked', async () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
-      const dorianButton = wrapper.findAll('button').find((b) => b.text() === 'Dorian (II)')!
+      const dorianButton = wrapper.findAll('button').find((b) => b.text() === 'Dorian (ii)')!
       await dorianButton.trigger('click')
       expect(wrapper.emitted('select-scale')).toEqual([['major-e-shape-dorian']])
       expect(wrapper.emitted('select-shape')).toBeUndefined()

@@ -46,8 +46,19 @@ export const DORIAN_SCALE: Scale = {
   flats: [false, false, true, false, false, false, true],
 }
 
+export const PHRYGIAN_SCALE: Scale = {
+  id: 'phrygian',
+  name: 'Phrygian',
+  // The major scale's own 3rd mode: same pitch classes as the major scale
+  // rooted a major third down, so degrees 2, 3, 6 and 7 land a semitone below
+  // their major-scale counterparts (b2, b3, b6, b7).
+  formula: [0, 1, 3, 5, 7, 8, 10],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
+  flats: [false, true, true, false, false, true, true],
+}
+
 /** Every scale the app knows about — add new scales here as they're written. */
-export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE]
+export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE]
 
 /** Shared by scaleDegree/scaleDegreeIsFlat: which formula entry a note's distance from the root matches. */
 function formulaIndexOf(scale: Scale, semitonesFromRoot: number): number {

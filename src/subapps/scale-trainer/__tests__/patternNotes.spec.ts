@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING } from '../../../theory'
+import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, STANDARD_TUNING } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
@@ -164,5 +164,43 @@ describe('major-e-shape-dorian (same shape as "Scala maggiore (1)", root on the 
       const sameDegreeIonianNote = ionian.find((n) => n.degree === note.degree)!
       expect(note.color).toBe(sameDegreeIonianNote.color)
     }
+  })
+})
+
+describe('major-e-shape-phrygian (same shape as "Scala maggiore (1)", root on the 5th string\'s 1st finger)', () => {
+  const patternPhrygian = PATTERNS.find((p) => p.id === 'major-e-shape-phrygian')!
+  const derived = derivePatternNotes(patternPhrygian, PHRYGIAN_SCALE, STANDARD_TUNING)
+
+  function degreeAt(stringNumber: number, fret: number): DerivedNote {
+    const note = derived.find((n) => n.stringIndex === 6 - stringNumber && n.fret === fret)
+    expect(note).toBeDefined()
+    return note!
+  }
+
+  it('gives the root (5th string, 2nd fret) degree 1, not flat', () => {
+    expect(degreeAt(5, 2)).toMatchObject({ degree: 1, flat: false })
+    expect(degreeAt(3, 4)).toMatchObject({ degree: 1, flat: false })
+  })
+
+  it('marks b2, b3, b6 and b7 flat, exactly as computed for this shape', () => {
+    expect(degreeAt(5, 3)).toMatchObject({ degree: 2, flat: true })
+    expect(degreeAt(3, 5)).toMatchObject({ degree: 2, flat: true })
+    expect(degreeAt(5, 5)).toMatchObject({ degree: 3, flat: true })
+    expect(degreeAt(2, 3)).toMatchObject({ degree: 3, flat: true })
+    expect(degreeAt(6, 3)).toMatchObject({ degree: 6, flat: true })
+    expect(degreeAt(4, 5)).toMatchObject({ degree: 6, flat: true })
+    expect(degreeAt(1, 3)).toMatchObject({ degree: 6, flat: true })
+    expect(degreeAt(6, 5)).toMatchObject({ degree: 7, flat: true })
+    expect(degreeAt(3, 2)).toMatchObject({ degree: 7, flat: true })
+    expect(degreeAt(1, 5)).toMatchObject({ degree: 7, flat: true })
+  })
+
+  it('leaves the 1st, 4th and 5th degrees unflagged', () => {
+    for (const note of derived) {
+      expect(note.flat).toBe(![1, 4, 5].includes(note.degree))
+    }
+    expect(degreeAt(2, 5).degree).toBe(4)
+    expect(degreeAt(4, 2).degree).toBe(4)
+    expect(degreeAt(6, 2).degree).toBe(5)
   })
 })
