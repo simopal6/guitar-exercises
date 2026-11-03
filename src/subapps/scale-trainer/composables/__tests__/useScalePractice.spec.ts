@@ -41,6 +41,8 @@ vi.mock('tone', () => {
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
+    // Runs Draw callbacks right away: there's no real audio clock to wait for here
+    getDraw: () => ({ schedule: (callback: () => void) => callback() }),
     Transport,
     Synth,
     Filter,
@@ -137,13 +139,7 @@ describe('useScalePractice', () => {
     expect(result.phase.value).toBe('running')
   })
 
-  // The dot animation (advancing currentMidi on each metronome beat) is
-  // temporarily disabled — see DOT_ANIMATION_ENABLED in useScalePractice.ts —
-  // because it was found to contribute to audio drift at high bpm on iOS
-  // Safari. currentMidi stays null throughout practice until it's
-  // re-enabled; buildUpDownSequence itself is still covered by its own
-  // sequence.spec.ts regardless.
-  it('currentMidi stays null across metronome beats while the dot animation is disabled', async () => {
+  it('highlights nothing before the first beat, then steps up through the box one note per beat', async () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('forma')
     result.selectShape(PATTERNS[0].shapeId)
@@ -151,8 +147,10 @@ describe('useScalePractice', () => {
     expect(result.currentMidi.value).toBeNull()
 
     tick()
+    const first = result.currentMidi.value
+    expect(first).toBe(Math.min(...result.notes.value.map((n) => n.midi)))
     tick()
-    expect(result.currentMidi.value).toBeNull()
+    expect(result.currentMidi.value).toBeGreaterThan(first!)
   })
 
   it('stop() returns to setup', async () => {
@@ -227,26 +225,24 @@ describe('useScalePractice', () => {
       expect(result.selectedOctaveIndex.value).toBe(0)
     })
 
-    // Which pitches get stepped through (stepMidis, filtered to the chosen
-    // octave) is unaffected by the dot animation being disabled — only
-    // currentMidi (the visual highlight) stays null while it is.
-    it('running with an octave selected still leaves currentMidi null, like "forma" mode', async () => {
+    it('steps through the chosen octave only, starting from its root', async () => {
       const { result } = withSetup(useScalePractice)
       setupScala(result)
       await result.start()
       expect(result.currentMidi.value).toBeNull()
 
       tick()
-      expect(result.currentMidi.value).toBeNull()
+      expect(result.currentMidi.value).toBe(43)
     })
 
-    it('switching to the other octave still changes which complete octave is selected', async () => {
+    it('switching to the other octave starts from that octave\'s root', async () => {
       const { result } = withSetup(useScalePractice)
       setupScala(result)
       result.selectOctave(1)
       expect(result.selectedOctaveIndex.value).toBe(1)
       await result.start()
-      expect(result.currentMidi.value).toBeNull()
+      tick()
+      expect(result.currentMidi.value).toBe(55)
     })
 
     it('selectOctave is a no-op once running', async () => {

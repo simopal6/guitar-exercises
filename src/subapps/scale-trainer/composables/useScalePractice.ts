@@ -12,13 +12,6 @@ import { getPatternTempo, setPatternTempo } from '../patternTempoStore'
 const BPM_STEP = 10
 const DEFAULT_BPM = 80
 
-// Disabled for now: tying a Vue state update to every single metronome beat
-// (to advance the highlighted dot) was found to contribute to audible audio
-// drift at high bpm on iOS Safari. The stepping logic itself is left fully
-// intact below — flipping this back to true is the only change needed to
-// re-enable the animation once a lighter-weight approach is in place.
-const DOT_ANIMATION_ENABLED = false
-
 export type PracticePhase = 'setup' | 'running'
 /** "forma" = the whole box, up and down (today's only mode). "scala" = one root-to-root octave. */
 export type PracticeMode = 'forma' | 'scala'
@@ -39,7 +32,9 @@ export function useScalePractice() {
   const shapeId = ref<string | null>(null)
   const patternId = ref<string | null>(null)
   const selectedOctaveIndex = ref(0)
-  const currentStep = ref(0)
+  // -1 = no beat played yet: nothing is highlighted until the first click,
+  // which then lights the first note of the sequence together with it.
+  const currentStep = ref(-1)
 
   const metronome = useMetronome(DEFAULT_BPM)
   const bpm = metronome.bpm
@@ -87,8 +82,7 @@ export function useScalePractice() {
   })
   const sequence = computed(() => buildUpDownSequence(stepMidis.value.length))
   const currentMidi = computed<number | null>(() => {
-    if (!DOT_ANIMATION_ENABLED) return null
-    if (stepMidis.value.length === 0) return null
+    if (currentStep.value < 0 || stepMidis.value.length === 0) return null
     const index = sequence.value[currentStep.value % sequence.value.length]
     return index === undefined ? null : (stepMidis.value[index] ?? null)
   })
@@ -119,7 +113,7 @@ export function useScalePractice() {
 
   async function start() {
     if (!canStart.value) return
-    currentStep.value = 0
+    currentStep.value = -1
     const key = tempoKey()
     metronome.setBpm((key ? getPatternTempo(key) : undefined) ?? DEFAULT_BPM)
     // iOS Safari only resumes the audio context if that happens with no other
@@ -128,11 +122,9 @@ export function useScalePractice() {
     // (silently leaving audio suspended, though everything else still runs).
     await metronome.start()
     await wakeLock.request()
-    if (DOT_ANIMATION_ENABLED) {
-      unsubscribeBeat = metronome.onBeat(() => {
-        currentStep.value = (currentStep.value + 1) % sequence.value.length
-      })
-    }
+    unsubscribeBeat = metronome.onBeat(() => {
+      currentStep.value = (currentStep.value + 1) % sequence.value.length
+    })
     phase.value = 'running'
   }
 

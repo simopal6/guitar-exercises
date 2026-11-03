@@ -8,7 +8,7 @@ export interface Metronome {
   stop(): void
   /** Live change, no restart, no audible glitch — Transport retimes future ticks on its own. */
   setBpm(bpm: number): void
-  /** Subscribe to each click (the same Tone.Loop/Transport driving the audio — not a second clock). Returns an unsubscribe function. */
+  /** Subscribe to each click (the same Tone.Loop/Transport driving the audio — not a second clock), called when the click is heard. Returns an unsubscribe function. */
   onBeat(callback: () => void): () => void
   dispose(): void
 }
@@ -75,7 +75,11 @@ export function useMetronome(initialBpm: number): Metronome {
         // it Tone plays the click whenever this callback happens to run,
         // quantized to the clock's update interval: audibly irregular at high bpm.
         synth?.triggerAttackRelease(CLICK_NOTE, CLICK_DURATION_SECONDS, time)
-        for (const listener of beatListeners) listener()
+        // This callback runs up to lookAhead *before* the click is heard;
+        // Draw defers the listeners to the moment it actually sounds.
+        Tone?.getDraw().schedule(() => {
+          for (const listener of beatListeners) listener()
+        }, time)
       }, '4n')
     }
     Tone.Transport.bpm.value = bpm.value

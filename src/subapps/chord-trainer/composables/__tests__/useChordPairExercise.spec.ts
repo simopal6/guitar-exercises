@@ -43,6 +43,8 @@ vi.mock('tone', () => {
   }
   return {
     start: vi.fn().mockResolvedValue(undefined),
+    // Runs Draw callbacks right away: there's no real audio clock to wait for here
+    getDraw: () => ({ schedule: (callback: () => void) => callback() }),
     Transport,
     Filter,
     Limiter,
