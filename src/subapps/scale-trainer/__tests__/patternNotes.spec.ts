@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, STANDARD_TUNING } from '../../../theory'
+import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, MINOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, STANDARD_TUNING } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
@@ -202,5 +202,32 @@ describe('major-e-shape-phrygian (same shape as "Scala maggiore (1)", root on th
     expect(degreeAt(2, 5).degree).toBe(4)
     expect(degreeAt(4, 2).degree).toBe(4)
     expect(degreeAt(6, 2).degree).toBe(5)
+  })
+})
+
+describe('minor-pentatonic (same shape as "Pentatonica", root on the 4th string\'s 1st finger)', () => {
+  const patternMinorPentatonic = PATTERNS.find((p) => p.id === 'minor-pentatonic')!
+  const derived = derivePatternNotes(patternMinorPentatonic, MINOR_PENTATONIC_SCALE, STANDARD_TUNING)
+
+  function degreeAt(stringNumber: number, fret: number): DerivedNote {
+    const note = derived.find((n) => n.stringIndex === 6 - stringNumber && n.fret === fret)
+    expect(note).toBeDefined()
+    return note!
+  }
+
+  it('gives the roots (4th string 2nd fret, 2nd string 5th fret) degree 1', () => {
+    expect(degreeAt(4, 2)).toMatchObject({ degree: 1, flat: false })
+    expect(degreeAt(2, 5)).toMatchObject({ degree: 1, flat: false })
+  })
+
+  it('uses degrees 1, b3, 4, 5, b7, with only 3 and 7 marked flat', () => {
+    expect(degreeAt(6, 3)).toMatchObject({ degree: 3, flat: true })
+    expect(degreeAt(6, 5)).toMatchObject({ degree: 4, flat: false })
+    expect(degreeAt(5, 2)).toMatchObject({ degree: 5, flat: false })
+    expect(degreeAt(5, 5)).toMatchObject({ degree: 7, flat: true })
+    for (const note of derived) {
+      expect([1, 3, 4, 5, 7]).toContain(note.degree)
+      expect(note.flat).toBe(note.degree === 3 || note.degree === 7)
+    }
   })
 })

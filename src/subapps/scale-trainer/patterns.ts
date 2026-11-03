@@ -1,4 +1,4 @@
-import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE } from '../../theory'
+import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, MINOR_PENTATONIC_SCALE } from '../../theory'
 import type { ScalePattern, ScalePatternNote } from './pattern'
 
 const patternARoot: ScalePatternNote = { string: 6, fret: 3 }
@@ -68,6 +68,22 @@ const patternPhrygian: ScalePattern = {
   notes: shapeANotes,
 }
 
+/** Every position of the "Pentatonica" shape — shared by its major and minor readings. */
+const pentatonicNotes: ScalePatternNote[] = [
+  { string: 6, fret: 3 },
+  { string: 6, fret: 5 },
+  { string: 5, fret: 2 },
+  { string: 5, fret: 5 },
+  { string: 4, fret: 2 },
+  { string: 4, fret: 5 },
+  { string: 3, fret: 2 },
+  { string: 3, fret: 4 },
+  { string: 2, fret: 3 },
+  { string: 2, fret: 5 },
+  { string: 1, fret: 3 },
+  { string: 1, fret: 5 },
+]
+
 /**
  * The same shape as "Scala maggiore (1)" (same root, same box), with the
  * notes that are only in the major scale (degrees 4 and 7) removed, since
@@ -81,24 +97,26 @@ const patternPentatonic: ScalePattern = {
   scaleLabel: 'Pentatonica maggiore',
   root: patternARoot,
   rootOffsetInBox: 1,
-  notes: [
-    { string: 6, fret: 3 },
-    { string: 6, fret: 5 },
-    { string: 5, fret: 2 },
-    { string: 5, fret: 5 },
-    { string: 4, fret: 2 },
-    { string: 4, fret: 5 },
-    { string: 3, fret: 2 },
-    { string: 3, fret: 4 },
-    { string: 2, fret: 3 },
-    { string: 2, fret: 5 },
-    { string: 1, fret: 3 },
-    { string: 1, fret: 5 },
-  ],
+  notes: pentatonicNotes,
+}
+
+/**
+ * The "Pentatonica" shape again (same 12 positions), read from its relative
+ * minor root (4th string, 1st finger): degrees 3 and 7 marked flat.
+ */
+const patternMinorPentatonic: ScalePattern = {
+  id: 'minor-pentatonic',
+  shapeId: 'major-pentatonic',
+  scaleId: MINOR_PENTATONIC_SCALE.id,
+  label: 'Pentatonica',
+  scaleLabel: 'Pentatonica minore',
+  root: { string: 4, fret: 2 },
+  rootOffsetInBox: 0, // root is the box's 1st fret (box = [2,5] for this root)
+  notes: pentatonicNotes,
 }
 
 /** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Scala" row lists them in. */
-export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPhrygian, patternPentatonic]
+export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPhrygian, patternPentatonic, patternMinorPentatonic]
 
 export interface ScaleShape {
   id: string

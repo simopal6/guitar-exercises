@@ -57,8 +57,18 @@ export const PHRYGIAN_SCALE: Scale = {
   flats: [false, true, true, false, false, true, true],
 }
 
+export const MINOR_PENTATONIC_SCALE: Scale = {
+  id: 'minor-pentatonic',
+  name: 'Pentatonica minore',
+  // Same pitch classes as the major pentatonic rooted a minor third up, read
+  // against the major scale: 1, b3, 4, 5, b7 (the natural minor without 2 and 6).
+  formula: [0, 3, 5, 7, 10],
+  degrees: [1, 3, 4, 5, 7],
+  flats: [false, true, false, false, true],
+}
+
 /** Every scale the app knows about — add new scales here as they're written. */
-export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE]
+export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, MINOR_PENTATONIC_SCALE]
 
 /** Shared by scaleDegree/scaleDegreeIsFlat: which formula entry a note's distance from the root matches. */
 function formulaIndexOf(scale: Scale, semitonesFromRoot: number): number {
