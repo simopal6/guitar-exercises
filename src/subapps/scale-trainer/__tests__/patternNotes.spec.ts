@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, MINOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, STANDARD_TUNING } from '../../../theory'
+import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, MINOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, SCALES, STANDARD_TUNING } from '../../../theory'
 import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../../../components/scale-box/patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
@@ -230,4 +230,27 @@ describe('minor-pentatonic (same shape as "Pentatonica", root on the 4th string\
       expect(note.flat).toBe(note.degree === 3 || note.degree === 7)
     }
   })
+})
+
+describe('the other four modes of "Scala maggiore (1)"', () => {
+  const cases = [
+    { id: 'major-e-shape-lydian', root: [5, 3], altered: { 4: '#' } },
+    { id: 'major-e-shape-mixolydian', root: [5, 5], altered: { 7: 'b' } },
+    { id: 'major-e-shape-aeolian', root: [4, 2], altered: { 3: 'b', 6: 'b', 7: 'b' } },
+    { id: 'major-e-shape-locrian', root: [6, 2], altered: { 2: 'b', 3: 'b', 5: 'b', 6: 'b', 7: 'b' } },
+  ] as const
+
+  for (const { id, root, altered } of cases) {
+    it(`${id}: root at string ${root[0]}, fret ${root[1]}, with exactly its own b/# degrees`, () => {
+      const pattern = PATTERNS.find((p) => p.id === id)!
+      const scale = SCALES.find((s) => s.id === pattern.scaleId)!
+      const derived = derivePatternNotes(pattern, scale, STANDARD_TUNING)
+      const rootNote = derived.find((n) => n.stringIndex === 6 - root[0] && n.fret === root[1])!
+      expect(rootNote.degree).toBe(1)
+      for (const note of derived) {
+        const mark = note.flat ? 'b' : note.sharp ? '#' : undefined
+        expect(mark).toBe((altered as Record<number, string>)[note.degree])
+      }
+    })
+  }
 })

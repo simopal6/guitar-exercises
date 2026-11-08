@@ -8,7 +8,7 @@ import {
   romanNumeral,
   triadFifth,
 } from '../diatonic'
-import { DORIAN_SCALE, MAJOR_SCALE, PHRYGIAN_SCALE, scaleDegree } from '../scales'
+import { AEOLIAN_SCALE, DORIAN_SCALE, LOCRIAN_SCALE, LYDIAN_SCALE, MAJOR_SCALE, MIXOLYDIAN_SCALE, PHRYGIAN_SCALE, scaleDegree } from '../scales'
 import type { PitchClass } from '../notes'
 
 const ALL_KEYS = Array.from({ length: 12 }, (_, i) => i as PitchClass)
@@ -95,6 +95,16 @@ describe('modeScale', () => {
     expect(modeScale(2).flats).toEqual(DORIAN_SCALE.flats)
     expect(modeScale(3).formula).toEqual(PHRYGIAN_SCALE.formula)
     expect(modeScale(3).flats).toEqual(PHRYGIAN_SCALE.flats)
+  })
+
+  it('matches the hand-written Lydian, Mixolydian, Aeolian and Locrian scales', () => {
+    const marks = (flats?: boolean[], sharps?: boolean[]) => [0, 1, 2, 3, 4, 5, 6].map((i) => (flats?.[i] ? 'b' : sharps?.[i] ? '#' : ''))
+    ;[LYDIAN_SCALE, MIXOLYDIAN_SCALE, AEOLIAN_SCALE, LOCRIAN_SCALE].forEach((scale, i) => {
+      const mode = modeScale(i + 4)
+      expect(scale.id).toBe(mode.id)
+      expect(scale.formula).toEqual(mode.formula)
+      expect(marks(scale.flats, scale.sharps)).toEqual(marks(mode.flats, mode.sharps))
+    })
   })
 
   it('numbers degrees from the mode\'s own root, so the b3 of Dorian is degree 3', () => {

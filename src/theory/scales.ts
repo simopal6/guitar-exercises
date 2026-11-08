@@ -69,8 +69,53 @@ export const MINOR_PENTATONIC_SCALE: Scale = {
   flats: [false, true, false, false, true],
 }
 
+// The remaining modes of the major scale, written out like Dorian and
+// Phrygian (diatonic.ts's modeScale() derives the same values; a test keeps
+// the two in agreement).
+export const LYDIAN_SCALE: Scale = {
+  id: 'lydian',
+  name: 'Lydian',
+  formula: [0, 2, 4, 6, 7, 9, 11],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
+  sharps: [false, false, false, true, false, false, false],
+}
+
+export const MIXOLYDIAN_SCALE: Scale = {
+  id: 'mixolydian',
+  name: 'Mixolydian',
+  formula: [0, 2, 4, 5, 7, 9, 10],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
+  flats: [false, false, false, false, false, false, true],
+}
+
+export const AEOLIAN_SCALE: Scale = {
+  id: 'aeolian',
+  name: 'Aeolian',
+  formula: [0, 2, 3, 5, 7, 8, 10],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
+  flats: [false, false, true, false, false, true, true],
+}
+
+export const LOCRIAN_SCALE: Scale = {
+  id: 'locrian',
+  name: 'Locrian',
+  formula: [0, 1, 3, 5, 6, 8, 10],
+  degrees: [1, 2, 3, 4, 5, 6, 7],
+  flats: [false, true, true, false, true, true, true],
+}
+
 /** Every scale the app knows about — add new scales here as they're written. */
-export const SCALES: Scale[] = [MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, MINOR_PENTATONIC_SCALE]
+export const SCALES: Scale[] = [
+  MAJOR_SCALE,
+  MAJOR_PENTATONIC_SCALE,
+  DORIAN_SCALE,
+  PHRYGIAN_SCALE,
+  LYDIAN_SCALE,
+  MIXOLYDIAN_SCALE,
+  AEOLIAN_SCALE,
+  LOCRIAN_SCALE,
+  MINOR_PENTATONIC_SCALE,
+]
 
 /** Shared by scaleDegree/scaleDegreeIsFlat: which formula entry a note's distance from the root matches. */
 function formulaIndexOf(scale: Scale, semitonesFromRoot: number): number {

@@ -1,4 +1,4 @@
-import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, MINOR_PENTATONIC_SCALE } from '../../theory'
+import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, LYDIAN_SCALE, MIXOLYDIAN_SCALE, AEOLIAN_SCALE, LOCRIAN_SCALE, MINOR_PENTATONIC_SCALE } from '../../theory'
 import type { ScalePattern } from './pattern'
 import type { ScalePatternNote } from '../../components/scale-box/pattern'
 import { MAJOR_E_SHAPE_NOTES, MAJOR_E_SHAPE_ROOT } from '../../components/scale-box/majorEShape'
@@ -50,6 +50,31 @@ const patternPhrygian: ScalePattern = {
   notes: shapeANotes,
 }
 
+/**
+ * The other four modes of the same shape, each read from its own root — the
+ * lowest place that root falls inside the box: Lydian on the 5th string's 2nd
+ * finger (#4 marked), Mixolydian on the 5th string's 4th finger (b7),
+ * Aeolian on the 4th string's 1st finger (b3, b6, b7), Locrian on the 6th
+ * string's 1st finger (b2, b3, b5, b6, b7).
+ */
+function eShapeMode(id: string, scaleId: string, scaleLabel: string, root: ScalePatternNote): ScalePattern {
+  return {
+    id: `major-e-shape-${id}`,
+    shapeId: 'major-e-shape',
+    scaleId,
+    label: 'Scala maggiore (1)',
+    scaleLabel,
+    root,
+    rootOffsetInBox: root.fret - 2, // box = [2,5], as for every reading of this shape
+    notes: shapeANotes,
+  }
+}
+
+const patternLydian = eShapeMode('lydian', LYDIAN_SCALE.id, 'Lydian (IV)', { string: 5, fret: 3 })
+const patternMixolydian = eShapeMode('mixolydian', MIXOLYDIAN_SCALE.id, 'Mixolydian (V)', { string: 5, fret: 5 })
+const patternAeolian = eShapeMode('aeolian', AEOLIAN_SCALE.id, 'Aeolian (vi)', { string: 4, fret: 2 })
+const patternLocrian = eShapeMode('locrian', LOCRIAN_SCALE.id, 'Locrian (vii°)', { string: 6, fret: 2 })
+
 /** Every position of the "Pentatonica" shape — shared by its major and minor readings. */
 const pentatonicNotes: ScalePatternNote[] = [
   { string: 6, fret: 3 },
@@ -98,7 +123,17 @@ const patternMinorPentatonic: ScalePattern = {
 }
 
 /** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Scala" row lists them in. */
-export const PATTERNS: ScalePattern[] = [patternA, patternDorian, patternPhrygian, patternPentatonic, patternMinorPentatonic]
+export const PATTERNS: ScalePattern[] = [
+  patternA,
+  patternDorian,
+  patternPhrygian,
+  patternLydian,
+  patternMixolydian,
+  patternAeolian,
+  patternLocrian,
+  patternPentatonic,
+  patternMinorPentatonic,
+]
 
 export interface ScaleShape {
   id: string

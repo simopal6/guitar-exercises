@@ -115,6 +115,16 @@ describe('useScalePractice', () => {
     expect(result.shapeId.value).toBe('major-pentatonic')
   })
 
+  it('every scale in the list has at least one complete octave, so "scala" mode can start on any of them', () => {
+    for (const pattern of PATTERNS) {
+      const { result } = withSetup(useScalePractice)
+      result.selectMode('scala')
+      result.selectScale(pattern.id)
+      expect({ id: pattern.id, octaves: result.completeOctaves.value.length > 0 }).toEqual({ id: pattern.id, octaves: true })
+      expect(result.canStart.value).toBe(true)
+    }
+  })
+
   it('selectScale is a no-op for an unknown id', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
