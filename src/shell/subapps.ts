@@ -3,7 +3,7 @@ import type { Component } from 'vue'
 /**
  * A sub-app is fully described here: adding a future one (ear-training,
  * fretboard note-finder) is just a new entry, lazy-loaded via dynamic import.
- * Order matters: it's the tab bar order, and the first entry is where "/" lands.
+ * Order matters: it's the order of the tiles on the home page.
  */
 export interface SubAppDefinition {
   id: string

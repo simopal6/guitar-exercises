@@ -1,9 +1,12 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import { subApps } from '../shell/subapps'
+import HomeView from '../shell/HomeView.vue'
 
-const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: subApps[0].path },
+export const routes: RouteRecordRaw[] = [
+  { path: '/', name: 'home', component: HomeView },
   ...subApps.map((app) => ({ path: app.path, name: app.id, component: app.component })),
+  // Unknown or outdated links land on the home page instead of a blank screen
+  { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 export const router = createRouter({
