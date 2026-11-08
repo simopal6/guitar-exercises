@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { DORIAN_SCALE, MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, MINOR_PENTATONIC_SCALE, PHRYGIAN_SCALE, STANDARD_TUNING } from '../../../theory'
-import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../patternNotes'
+import { derivePatternNotes, dropRedundantMarginNotes, type DerivedNote } from '../../../components/scale-box/patternNotes'
 import { generateScaleBoxNotes } from '../generateScaleBox'
 import { PATTERNS } from '../patterns'
-import type { ScalePatternNote } from '../pattern'
+import type { ScalePatternNote } from '../../../components/scale-box/pattern'
 
 const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')!
 
@@ -54,7 +54,7 @@ describe('generateScaleBoxNotes', () => {
 
   it('only returns positions whose pitch class actually belongs to the scale', () => {
     const derived = derivePatternNotes(
-      { id: 'test', shapeId: 'test', scaleId: MAJOR_SCALE.id, label: 'test', scaleLabel: 'test', root, rootOffsetInBox: 1, notes },
+      { root, notes },
       MAJOR_SCALE,
       STANDARD_TUNING,
     )
@@ -79,7 +79,7 @@ describe('generateScaleBoxNotes', () => {
 
 describe('dropRedundantMarginNotes', () => {
   function note(partial: Partial<DerivedNote> & Pick<DerivedNote, 'fret' | 'midi'>): DerivedNote {
-    return { stringIndex: 0, noteName: '', degree: 1, flat: false, color: '#000000', ...partial }
+    return { stringIndex: 0, noteName: '', degree: 1, flat: false, sharp: false, color: '#000000', ...partial }
   }
 
   it('drops a margin note whose pitch is already present inside the box', () => {

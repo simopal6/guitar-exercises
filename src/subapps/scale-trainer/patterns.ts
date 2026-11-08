@@ -1,28 +1,10 @@
 import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, MINOR_PENTATONIC_SCALE } from '../../theory'
-import type { ScalePattern, ScalePatternNote } from './pattern'
+import type { ScalePattern } from './pattern'
+import type { ScalePatternNote } from '../../components/scale-box/pattern'
+import { MAJOR_E_SHAPE_NOTES, MAJOR_E_SHAPE_ROOT } from '../../components/scale-box/majorEShape'
 
-const patternARoot: ScalePatternNote = { string: 6, fret: 3 }
-
-/** Every position of this shape — identical for the Ionian, Dorian and Phrygian readings of it, only the root (and so the degrees/colors) differs. */
-const shapeANotes: ScalePatternNote[] = [
-  { string: 6, fret: 2 },
-  { string: 6, fret: 3 },
-  { string: 6, fret: 5 },
-  { string: 5, fret: 2 },
-  { string: 5, fret: 3 },
-  { string: 5, fret: 5 },
-  { string: 4, fret: 2 },
-  { string: 4, fret: 4 },
-  { string: 4, fret: 5 },
-  { string: 3, fret: 2 },
-  { string: 3, fret: 4 },
-  { string: 3, fret: 5 },
-  { string: 2, fret: 3 },
-  { string: 2, fret: 5 },
-  { string: 1, fret: 2 },
-  { string: 1, fret: 3 },
-  { string: 1, fret: 5 },
-]
+const patternARoot = MAJOR_E_SHAPE_ROOT
+const shapeANotes = MAJOR_E_SHAPE_NOTES
 
 /** First major scale position, root on the 6th string (2nd finger). Hand-written, as most patterns will be. */
 const patternA: ScalePattern = {

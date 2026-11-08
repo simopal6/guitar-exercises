@@ -19,5 +19,12 @@ import { subApps } from './subapps'
         <span class="text-lg font-semibold">{{ app.title }}</span>
       </RouterLink>
     </nav>
+
+    <RouterLink
+      to="/credits"
+      class="mt-4 self-center text-xs text-slate-400 underline-offset-2 hover:underline dark:text-slate-500"
+    >
+      Crediti
+    </RouterLink>
   </div>
 </template>

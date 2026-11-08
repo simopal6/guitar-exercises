@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { findCompleteOctaves, octaveLabel } from '../octaves'
 import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, STANDARD_TUNING, type Scale } from '../../../theory'
-import { derivePatternNotes, dropRedundantMarginNotes, rootMidiOf } from '../patternNotes'
-import { STANDARD_BOX_SIZE } from '../pattern'
+import { derivePatternNotes, dropRedundantMarginNotes, rootMidiOf } from '../../../components/scale-box/patternNotes'
+import { STANDARD_BOX_SIZE } from '../../../components/scale-box/pattern'
 import { PATTERNS } from '../patterns'
 
 const MAJOR_FORMULA = MAJOR_SCALE.formula // [0, 2, 4, 5, 7, 9, 11]

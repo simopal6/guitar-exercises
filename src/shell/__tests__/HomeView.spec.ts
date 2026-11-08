@@ -20,7 +20,7 @@ describe('HomeView', () => {
     await router.push('/')
     const wrapper = mount(HomeView, { global: { plugins: [router] } })
 
-    const tiles = wrapper.findAll('a')
+    const tiles = wrapper.find('nav').findAll('a')
     expect(tiles.map((t) => t.text())).toEqual(subApps.map((app) => `${app.icon}${app.title}`))
     expect(tiles.map((t) => t.attributes('href'))).toEqual(subApps.map((app) => app.path))
   })
@@ -41,5 +41,18 @@ describe('HomeLink', () => {
     const link = wrapper.find('a')
     expect(link.text()).toContain('Home')
     expect(link.attributes('href')).toBe('/')
+  })
+})
+
+describe('HomeView credits link', () => {
+  it('links to the credits page, without a tile of its own', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', component: Blank }, { path: '/credits', component: Blank }, ...subApps.map((app) => ({ path: app.path, component: Blank }))],
+    })
+    await router.push('/')
+    const wrapper = mount(HomeView, { global: { plugins: [router] } })
+    const credits = wrapper.findAll('a').find((a) => a.text() === 'Crediti')!
+    expect(credits.attributes('href')).toBe('/credits')
   })
 })

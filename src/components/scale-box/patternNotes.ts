@@ -1,6 +1,6 @@
 import type { FretPosition, Scale, Tuning } from '../../theory'
-import { positionToMidi, positionToNoteName, scaleDegree, scaleDegreeIsFlat } from '../../theory'
-import { stringToIndex, type ScalePattern } from './pattern'
+import { positionToMidi, positionToNoteName, scaleDegree, scaleDegreeIsFlat, scaleDegreeIsSharp } from '../../theory'
+import { stringToIndex, type BoxPattern } from './pattern'
 import { colorForDegree } from './degreeColors'
 
 export interface DerivedNote {
@@ -10,6 +10,8 @@ export interface DerivedNote {
   degree: number // 1..7
   /** True for a degree flattened relative to the major scale (e.g. Dorian's b3/b7) — shown as a "b" marker, the color itself still follows the plain degree. */
   flat: boolean
+  /** Same, for a degree raised relative to the major scale (e.g. Lydian's #4) — shown as a "#" marker. */
+  sharp: boolean
   color: string
   midi: number // used to order notes by pitch and to compute degree
 }
@@ -19,12 +21,12 @@ function toPosition(note: { string: number; fret: number }): FretPosition {
 }
 
 /** The pattern's declared root, as a MIDI pitch — the reference every degree/octave calculation is anchored to. */
-export function rootMidiOf(pattern: ScalePattern, tuning: Tuning): number {
+export function rootMidiOf(pattern: BoxPattern, tuning: Tuning): number {
   return positionToMidi(tuning, toPosition(pattern.root))
 }
 
 /** Derives note name, scale degree and color for every note of a pattern — the only thing a pattern's author provides is positions + which one is the root + which scale. */
-export function derivePatternNotes(pattern: ScalePattern, scale: Scale, tuning: Tuning): DerivedNote[] {
+export function derivePatternNotes(pattern: BoxPattern, scale: Scale, tuning: Tuning): DerivedNote[] {
   const rootMidi = rootMidiOf(pattern, tuning)
   return pattern.notes.map((note) => {
     const position = toPosition(note)
@@ -36,6 +38,7 @@ export function derivePatternNotes(pattern: ScalePattern, scale: Scale, tuning: 
       noteName: positionToNoteName(tuning, position),
       degree,
       flat: scaleDegreeIsFlat(scale, midi - rootMidi),
+      sharp: scaleDegreeIsSharp(scale, midi - rootMidi),
       color: colorForDegree(degree),
       midi,
     }

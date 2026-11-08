@@ -1,6 +1,6 @@
 import type { Scale, Tuning } from '../../theory'
 import { positionToMidi, scaleDegree } from '../../theory'
-import { stringToIndex, type ScalePatternNote } from './pattern'
+import { stringToIndex, type ScalePatternNote } from '../../components/scale-box/pattern'
 
 /**
  * Generates every note of `scale` that falls within a fret window

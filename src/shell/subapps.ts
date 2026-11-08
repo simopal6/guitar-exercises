@@ -36,6 +36,13 @@ export const subApps: SubAppDefinition[] = [
     component: () => import('../subapps/interval-trainer/IntervalTrainerView.vue'),
   },
   {
+    id: 'mode-improv',
+    title: 'Modi',
+    path: '/modes',
+    icon: '🎼',
+    component: () => import('../subapps/mode-improv/ModeImprovView.vue'),
+  },
+  {
     id: 'song-trainer',
     title: 'Canzoni',
     path: '/songs',

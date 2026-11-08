@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useScalePractice } from './composables/useScalePractice'
 import PatternSetup from './components/PatternSetup.vue'
-import ScalePatternDiagram from './components/ScalePatternDiagram.vue'
+import ScalePatternDiagram from '../../components/scale-box/ScalePatternDiagram.vue'
 import MetronomeControl from '../../components/audio/MetronomeControl.vue'
 
 const {

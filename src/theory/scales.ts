@@ -19,6 +19,8 @@ export interface Scale {
    * itself or the major pentatonic.
    */
   flats?: boolean[]
+  /** Same as `flats`, for a degree a semitone ABOVE the major scale's (e.g. Lydian's #4) — shown as a "#" marker. */
+  sharps?: boolean[]
 }
 
 export const MAJOR_SCALE: Scale = {
@@ -90,6 +92,11 @@ function formulaIndexOf(scale: Scale, semitonesFromRoot: number): number {
  */
 export function scaleDegree(scale: Scale, semitonesFromRoot: number): number {
   return scale.degrees[formulaIndexOf(scale, semitonesFromRoot)]
+}
+
+/** Whether the note at this distance from the root is a degree raised relative to the major scale (e.g. Lydian's #4) — see `Scale.sharps`. */
+export function scaleDegreeIsSharp(scale: Scale, semitonesFromRoot: number): boolean {
+  return scale.sharps?.[formulaIndexOf(scale, semitonesFromRoot)] ?? false
 }
 
 /** Whether the note at this distance from the root is a degree flattened relative to the major scale (e.g. Dorian's b3/b7) — see `Scale.flats`. */

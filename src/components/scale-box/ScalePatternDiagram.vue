@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watchEffect } from 'vue'
-import type { DerivedNote } from '../patternNotes'
-import { STANDARD_BOX_SIZE } from '../pattern'
+import type { DerivedNote } from './patternNotes'
+import { STANDARD_BOX_SIZE } from './pattern'
 
 const props = defineProps<{
   notes: DerivedNote[]
@@ -11,6 +11,8 @@ const props = defineProps<{
   rootFret: number
   /** Row offset (0-3) of the root within the standard box — see ScalePattern.rootOffsetInBox. */
   rootOffsetInBox: number
+  /** Labels the standard box's first fret (e.g. "7fr") — needed once the box can sit anywhere on the neck, since the diagram has no other position cue. */
+  showFretNumber?: boolean
 }>()
 
 const STRING_COUNT = 6
@@ -127,6 +129,17 @@ watchEffect(() => {
       stroke-width="1.5"
     />
 
+    <text
+      v-if="showFretNumber"
+      :x="SIDE_MARGIN - 8"
+      :y="fretDotY(standardBoxStart)"
+      text-anchor="end"
+      dominant-baseline="central"
+      font-size="12"
+      class="fill-slate-500 dark:fill-slate-400"
+      data-testid="fret-number"
+    >{{ standardBoxStart }}fr</text>
+
     <template v-for="note in notes" :key="`${note.stringIndex}-${note.fret}`">
       <circle
         :cx="stringX(note.stringIndex)"
@@ -138,10 +151,10 @@ watchEffect(() => {
         class="stroke-white dark:stroke-slate-950"
         :aria-label="note.noteName"
       />
-      <!-- Marks a flattened degree (e.g. Dorian's b3/b7) without touching its color, which stays keyed to the plain degree number.
-           White fill with a black outline (via stroke + paint-order) keeps "b" legible against any of the 7 degree colors. -->
+      <!-- Marks a flattened (e.g. Dorian's b3/b7) or raised (Lydian's #4) degree without touching its color, which stays keyed to the plain degree number.
+           White fill with a black outline (via stroke + paint-order) keeps the sign legible against any of the 7 degree colors. -->
       <text
-        v-if="note.flat"
+        v-if="note.flat || note.sharp"
         :x="stringX(note.stringIndex)"
         :y="fretDotY(note.fret)"
         text-anchor="middle"
@@ -153,7 +166,7 @@ watchEffect(() => {
         stroke="black"
         stroke-width="3"
         paint-order="stroke"
-      >b</text>
+      >{{ note.flat ? 'b' : '#' }}</text>
     </template>
   </svg>
   </div>

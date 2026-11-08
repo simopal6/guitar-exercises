@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ScalePatternDiagram from '../ScalePatternDiagram.vue'
-import { MAJOR_SCALE, STANDARD_TUNING } from '../../../../theory'
-import { derivePatternNotes, type DerivedNote } from '../../patternNotes'
-import { PATTERNS } from '../../patterns'
+import { MAJOR_SCALE, STANDARD_TUNING } from '../../../theory'
+import { derivePatternNotes, type DerivedNote } from '../patternNotes'
+import { PATTERNS } from '../../../subapps/scale-trainer/patterns'
 
 const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')! // root fret 3, no stretch notes
 const notesA = derivePatternNotes(patternA, MAJOR_SCALE, STANDARD_TUNING).sort((a, b) => a.midi - b.midi)
 
 /** A minimal, synthetic note — not tied to any real pattern — for testing margin/stretch behavior in isolation. */
 function fakeNote(partial: Partial<DerivedNote> & Pick<DerivedNote, 'stringIndex' | 'fret' | 'midi'>): DerivedNote {
-  return { noteName: '', degree: 1, flat: false, color: '#123456', ...partial }
+  return { noteName: '', degree: 1, flat: false, sharp: false, color: '#123456', ...partial }
 }
 
 describe('ScalePatternDiagram', () => {
@@ -156,6 +156,24 @@ describe('ScalePatternDiagram', () => {
     it('does not warn when every note is within the window', () => {
       mount(ScalePatternDiagram, { props: { notes: notesA, currentMidi: null, rootFret: patternA.root.fret, rootOffsetInBox: patternA.rootOffsetInBox } })
       expect(console.warn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('sharp ("#") marker and fret number', () => {
+    it('draws a "#" on a sharp note and a "b" on a flat one', () => {
+      const sharpNote = fakeNote({ stringIndex: 1, fret: 4, midi: 49, sharp: true })
+      const flatNote = fakeNote({ stringIndex: 2, fret: 4, midi: 54, flat: true })
+      const wrapper = mount(ScalePatternDiagram, {
+        props: { notes: [sharpNote, flatNote], currentMidi: null, rootFret: 3, rootOffsetInBox: 1 },
+      })
+      expect(wrapper.findAll('text').map((t) => t.text())).toEqual(['#', 'b'])
+    })
+
+    it('labels the box\'s first fret only when asked', () => {
+      const props = { notes: [], currentMidi: null, rootFret: 13, rootOffsetInBox: 1 }
+      expect(mount(ScalePatternDiagram, { props }).find('[data-testid="fret-number"]').exists()).toBe(false)
+      const labelled = mount(ScalePatternDiagram, { props: { ...props, showFretNumber: true } })
+      expect(labelled.find('[data-testid="fret-number"]').text()).toBe('12fr')
     })
   })
 })

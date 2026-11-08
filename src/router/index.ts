@@ -5,6 +5,7 @@ import HomeView from '../shell/HomeView.vue'
 export const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: HomeView },
   ...subApps.map((app) => ({ path: app.path, name: app.id, component: app.component })),
+  { path: '/credits', name: 'credits', component: () => import('../shell/CreditsView.vue') },
   // Unknown or outdated links land on the home page instead of a blank screen
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
