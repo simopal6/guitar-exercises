@@ -6,6 +6,7 @@ import { purgeLegacyPairTempoFormat } from './chordTempoStore'
 import { seedCagedListIfNeeded } from './seedCaged'
 import PairView from './components/PairView.vue'
 import MetronomeControl from '../../components/audio/MetronomeControl.vue'
+import ElapsedTime from '../../components/ElapsedTime.vue'
 import ChordListPicker from './components/ChordListPicker.vue'
 import ChordListManager from './components/ChordListManager.vue'
 import ChordFormatHelp from './components/ChordFormatHelp.vue'
@@ -59,6 +60,7 @@ function onSelectList(id: string) {
   <div class="mx-auto flex max-w-md flex-col gap-6 px-4 pb-8 pt-8">
     <header class="flex items-center justify-between">
       <h1 class="text-xl font-semibold">Allenamento accordi</h1>
+      <ElapsedTime v-if="phase === 'running'" />
     </header>
 
     <template v-if="phase === 'setup'">

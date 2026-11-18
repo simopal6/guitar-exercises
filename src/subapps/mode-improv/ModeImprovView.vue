@@ -4,6 +4,7 @@ import ImprovSetup from './components/ImprovSetup.vue'
 import ChordModeCard from './components/ChordModeCard.vue'
 import GuitarPicker from './components/GuitarPicker.vue'
 import MetronomeControl from '../../components/audio/MetronomeControl.vue'
+import ElapsedTime from '../../components/ElapsedTime.vue'
 
 const {
   phase,
@@ -29,6 +30,7 @@ const {
   <div class="mx-auto flex max-w-md flex-col gap-6 px-4 pb-8 pt-8">
     <header class="flex items-center justify-between">
       <h1 class="text-xl font-semibold">Improvvisazione con i modi</h1>
+      <ElapsedTime v-if="phase === 'running'" />
     </header>
 
     <ImprovSetup
