@@ -104,14 +104,14 @@ describe('dropRedundantMarginNotes', () => {
   })
 })
 
-describe('major-pentatonic (same shape as "Scala maggiore (1)", degrees 4 and 7 removed)', () => {
+describe('major-pentatonic (same shape as "Scala maggiore (3)", degrees 4 and 7 removed)', () => {
   const patternPentatonic = PATTERNS.find((p) => p.id === 'major-pentatonic')!
 
-  it('has 12 notes: the 17 of "Scala maggiore (1)" minus the 5 major-only (degree 4 or 7) positions', () => {
+  it('has 12 notes: the 17 of "Scala maggiore (3)" minus the 5 major-only (degree 4 or 7) positions', () => {
     expect(patternPentatonic.notes).toHaveLength(12)
   })
 
-  it('shares the same root (6th string, 3rd fret) as "Scala maggiore (1)"', () => {
+  it('shares the same root (6th string, 3rd fret) as "Scala maggiore (3)"', () => {
     const patternA = PATTERNS.find((p) => p.id === 'major-e-shape')!
     expect(patternPentatonic.root).toEqual(patternA.root)
     expect(patternPentatonic.rootOffsetInBox).toBe(patternA.rootOffsetInBox)
@@ -125,7 +125,7 @@ describe('major-pentatonic (same shape as "Scala maggiore (1)", degrees 4 and 7 
   })
 })
 
-describe('major-e-shape-dorian (same shape as "Scala maggiore (1)", root on the 6th string\'s 4th finger)', () => {
+describe('major-e-shape-dorian (same shape as "Scala maggiore (3)", root on the 6th string\'s 4th finger)', () => {
   const patternDorian = PATTERNS.find((p) => p.id === 'major-e-shape-dorian')!
   const derived = derivePatternNotes(patternDorian, DORIAN_SCALE, STANDARD_TUNING)
 
@@ -167,7 +167,7 @@ describe('major-e-shape-dorian (same shape as "Scala maggiore (1)", root on the 
   })
 })
 
-describe('major-e-shape-phrygian (same shape as "Scala maggiore (1)", root on the 5th string\'s 1st finger)', () => {
+describe('major-e-shape-phrygian (same shape as "Scala maggiore (3)", root on the 5th string\'s 1st finger)', () => {
   const patternPhrygian = PATTERNS.find((p) => p.id === 'major-e-shape-phrygian')!
   const derived = derivePatternNotes(patternPhrygian, PHRYGIAN_SCALE, STANDARD_TUNING)
 
@@ -232,7 +232,7 @@ describe('minor-pentatonic (same shape as "Pentatonica", root on the 4th string\
   })
 })
 
-describe('the other four modes of "Scala maggiore (1)"', () => {
+describe('the other four modes of "Scala maggiore (3)"', () => {
   const cases = [
     { id: 'major-e-shape-lydian', root: [5, 3], altered: { 4: '#' } },
     { id: 'major-e-shape-mixolydian', root: [5, 5], altered: { 7: 'b' } },
@@ -253,4 +253,25 @@ describe('the other four modes of "Scala maggiore (1)"', () => {
       }
     })
   }
+})
+
+describe('major-a-shape ("Scala maggiore (10)", root on the 5th string\'s 4th finger)', () => {
+  const pattern = PATTERNS.find((p) => p.id === 'major-a-shape')!
+
+  it('is exactly every major scale note in the [2,5] window, 17 in all', () => {
+    const generated = generateScaleBoxNotes(STANDARD_TUNING, MAJOR_SCALE, pattern.root, 2, 5)
+    expect(pattern.notes).toEqual(generated)
+    expect(pattern.notes).toHaveLength(17)
+  })
+
+  it('has its root on the 5th string, on the box\'s last fret', () => {
+    expect(pattern.root).toEqual({ string: 5, fret: 5 })
+    expect(pattern.root.fret - pattern.rootOffsetInBox).toBe(2)
+    const roots = derivePatternNotes(pattern, MAJOR_SCALE, STANDARD_TUNING).filter((n) => n.degree === 1)
+    expect(roots.some((n) => n.stringIndex === 1 && n.fret === 5)).toBe(true)
+  })
+
+  it('is offered only as a shape, not in the "Scala" list', () => {
+    expect(pattern.shapeOnly).toBe(true)
+  })
 })

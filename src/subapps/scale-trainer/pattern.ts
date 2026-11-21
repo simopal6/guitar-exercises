@@ -5,7 +5,7 @@ export interface ScalePattern extends BoxPattern {
   /** Groups every pattern sharing the same physical box/root — a "shape" can offer more than one scale. */
   shapeId: string
   scaleId: string
-  /** The shape's own name, shown when picking a shape (e.g. "Scala maggiore (1)"). Identical for every pattern sharing a `shapeId`. */
+  /** The shape's own name, shown when picking a shape (e.g. "Scala maggiore (3)"). Identical for every pattern sharing a `shapeId`. */
   label: string
   /** The scale's name within this shape, shown when picking a scale inside an already-chosen shape (e.g. "Ionian"). */
   scaleLabel: string
@@ -18,4 +18,6 @@ export interface ScalePattern extends BoxPattern {
    * the root on row 2, while an "A-shape" box has it on row 4.
    */
   rootOffsetInBox: number
+  /** Offered only as a shape in "forma" mode, never in the "scala" mode's scale list. */
+  shapeOnly?: boolean
 }

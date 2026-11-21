@@ -2,7 +2,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { STANDARD_TUNING, SCALES } from '../../../theory'
 import { clampBpm, useMetronome } from '../../../components/audio/useMetronome'
 import { useWakeLock } from '../../../composables/useWakeLock'
-import { PATTERNS } from '../patterns'
+import { PATTERNS, SCALE_PATTERNS } from '../patterns'
 import { STANDARD_BOX_SIZE } from '../../../components/scale-box/pattern'
 import { derivePatternNotes, dropRedundantMarginNotes, rootMidiOf } from '../../../components/scale-box/patternNotes'
 import { findCompleteOctaves, type ScaleOctave } from '../octaves'
@@ -168,7 +168,7 @@ export function useScalePractice() {
   // pattern purely as bookkeeping, nothing reads it to filter a list here.
   function selectScale(id: string) {
     if (phase.value !== 'setup') return
-    const pattern = PATTERNS.find((p) => p.id === id)
+    const pattern = SCALE_PATTERNS.find((p) => p.id === id)
     if (!pattern) return
     patternId.value = pattern.id
     shapeId.value = pattern.shapeId

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PATTERNS, SHAPES } from '../patterns'
+import { SCALE_PATTERNS, SHAPES } from '../patterns'
 import { octaveLabel } from '../octaves'
 import type { PracticeMode } from '../composables/useScalePractice'
 import type { ScaleOctave } from '../octaves'
@@ -74,7 +74,7 @@ function pillClass(active: boolean, disabled = false): string {
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Scala</p>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="pattern in PATTERNS"
+          v-for="pattern in SCALE_PATTERNS"
           :key="pattern.id"
           type="button"
           class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"

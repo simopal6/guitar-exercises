@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { useScalePractice } from '../useScalePractice'
 import { getPatternTempo } from '../../patternTempoStore'
-import { PATTERNS } from '../../patterns'
+import { PATTERNS, SCALE_PATTERNS } from '../../patterns'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
@@ -95,11 +95,26 @@ describe('useScalePractice', () => {
     expect(result.canStart.value).toBe(true)
   })
 
+  it('in "forma" mode, "Scala maggiore (10)" can be picked as a shape', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('forma')
+    result.selectShape('major-a-shape')
+    expect(result.patternId.value).toBe('major-a-shape')
+    expect(result.canStart.value).toBe(true)
+  })
+
+  it('in "scala" mode, a shape-only pattern cannot be picked as a scale', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('scala')
+    result.selectScale('major-a-shape')
+    expect(result.patternId.value).toBeNull()
+  })
+
   it('in "scala" mode, selectScale picks directly from any scale, with no shape question first', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
     expect(result.shapeId.value).toBeNull() // no "Forma" row/step in this mode
-    result.selectScale('major-e-shape-dorian') // Dorian, without ever picking "Scala maggiore (1)" as a shape
+    result.selectScale('major-e-shape-dorian') // Dorian, without ever picking "Scala maggiore (3)" as a shape
     expect(result.patternId.value).toBe('major-e-shape-dorian')
     expect(result.shapeId.value).toBe('major-e-shape') // bookkeeping only, derived from the chosen scale
     expect(result.canStart.value).toBe(true)
@@ -116,7 +131,7 @@ describe('useScalePractice', () => {
   })
 
   it('every scale in the list has at least one complete octave, so "scala" mode can start on any of them', () => {
-    for (const pattern of PATTERNS) {
+    for (const pattern of SCALE_PATTERNS) {
       const { result } = withSetup(useScalePractice)
       result.selectMode('scala')
       result.selectScale(pattern.id)
@@ -224,7 +239,7 @@ describe('useScalePractice', () => {
       result.selectScale('major-e-shape') // Ionian, picked directly — no shape step in "scala" mode
     }
 
-    it('finds the two complete octaves of "Scala maggiore (1)", defaulting to the first one', () => {
+    it('finds the two complete octaves of "Scala maggiore (3)", defaulting to the first one', () => {
       const { result } = withSetup(useScalePractice)
       setupScala(result)
       expect(result.patternId.value).toBe('major-e-shape')

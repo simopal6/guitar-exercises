@@ -11,7 +11,7 @@ const patternA: ScalePattern = {
   id: 'major-e-shape',
   shapeId: 'major-e-shape',
   scaleId: MAJOR_SCALE.id,
-  label: 'Scala maggiore (1)',
+  label: 'Scala maggiore (3)',
   scaleLabel: 'Ionian (I)',
   root: patternARoot,
   rootOffsetInBox: 1, // root is the box's 2nd fret (box = [2,5] for this root)
@@ -19,7 +19,7 @@ const patternA: ScalePattern = {
 }
 
 /**
- * Same shape as "Scala maggiore (1)" (same 17 positions), read from its 2nd
+ * Same shape as "Scala maggiore (3)" (same 17 positions), read from its 2nd
  * degree instead (6th string, 4th finger) — the major scale's own Dorian
  * mode, so every note keeps its usual degree color, with degrees 3 and 7
  * marked flat (see Scale.flats on DORIAN_SCALE).
@@ -28,7 +28,7 @@ const patternDorian: ScalePattern = {
   id: 'major-e-shape-dorian',
   shapeId: 'major-e-shape',
   scaleId: DORIAN_SCALE.id,
-  label: 'Scala maggiore (1)',
+  label: 'Scala maggiore (3)',
   scaleLabel: 'Dorian (ii)',
   root: { string: 6, fret: 5 },
   rootOffsetInBox: 3, // root is the box's 4th fret (box = [2,5] for this root)
@@ -43,7 +43,7 @@ const patternPhrygian: ScalePattern = {
   id: 'major-e-shape-phrygian',
   shapeId: 'major-e-shape',
   scaleId: PHRYGIAN_SCALE.id,
-  label: 'Scala maggiore (1)',
+  label: 'Scala maggiore (3)',
   scaleLabel: 'Phrygian (iii)',
   root: { string: 5, fret: 2 },
   rootOffsetInBox: 0, // root is the box's 1st fret (box = [2,5] for this root)
@@ -62,7 +62,7 @@ function eShapeMode(id: string, scaleId: string, scaleLabel: string, root: Scale
     id: `major-e-shape-${id}`,
     shapeId: 'major-e-shape',
     scaleId,
-    label: 'Scala maggiore (1)',
+    label: 'Scala maggiore (3)',
     scaleLabel,
     root,
     rootOffsetInBox: root.fret - 2, // box = [2,5], as for every reading of this shape
@@ -74,6 +74,43 @@ const patternLydian = eShapeMode('lydian', LYDIAN_SCALE.id, 'Lydian (IV)', { str
 const patternMixolydian = eShapeMode('mixolydian', MIXOLYDIAN_SCALE.id, 'Mixolydian (V)', { string: 5, fret: 5 })
 const patternAeolian = eShapeMode('aeolian', AEOLIAN_SCALE.id, 'Aeolian (vi)', { string: 4, fret: 2 })
 const patternLocrian = eShapeMode('locrian', LOCRIAN_SCALE.id, 'Locrian (vii°)', { string: 6, fret: 2 })
+
+/**
+ * Second major scale position, root on the 5th string (4th finger), so the
+ * root sits on the box's last fret. Drawn in the same [2,5] window as the
+ * other shapes: the diagram shows no fret numbers, so the shape reads the
+ * same in any key. Offered in "forma" mode only (shapeOnly), so the "Scala"
+ * list doesn't get a second "Ionian (I)".
+ */
+const patternMajorAShape: ScalePattern = {
+  id: 'major-a-shape',
+  shapeId: 'major-a-shape',
+  scaleId: MAJOR_SCALE.id,
+  label: 'Scala maggiore (10)',
+  scaleLabel: 'Ionian (I)',
+  root: { string: 5, fret: 5 },
+  rootOffsetInBox: 3, // root is the box's 4th fret (box = [2,5] for this root)
+  notes: [
+    { string: 6, fret: 2 },
+    { string: 6, fret: 3 },
+    { string: 6, fret: 5 },
+    { string: 5, fret: 2 },
+    { string: 5, fret: 4 },
+    { string: 5, fret: 5 },
+    { string: 4, fret: 2 },
+    { string: 4, fret: 4 },
+    { string: 4, fret: 5 },
+    { string: 3, fret: 2 },
+    { string: 3, fret: 4 },
+    { string: 2, fret: 2 },
+    { string: 2, fret: 3 },
+    { string: 2, fret: 5 },
+    { string: 1, fret: 2 },
+    { string: 1, fret: 3 },
+    { string: 1, fret: 5 },
+  ],
+  shapeOnly: true,
+}
 
 /** Every position of the "Pentatonica" shape — shared by its major and minor readings. */
 const pentatonicNotes: ScalePatternNote[] = [
@@ -92,7 +129,7 @@ const pentatonicNotes: ScalePatternNote[] = [
 ]
 
 /**
- * The same shape as "Scala maggiore (1)" (same root, same box), with the
+ * The same shape as "Scala maggiore (3)" (same root, same box), with the
  * notes that are only in the major scale (degrees 4 and 7) removed, since
  * the major pentatonic scale doesn't include them.
  */
@@ -122,7 +159,7 @@ const patternMinorPentatonic: ScalePattern = {
   notes: pentatonicNotes,
 }
 
-/** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Scala" row lists them in. */
+/** Every pattern the app knows about — add new patterns here as they're written. Order here is the order the "Forma" and "Scala" rows list them in. */
 export const PATTERNS: ScalePattern[] = [
   patternA,
   patternDorian,
@@ -131,9 +168,13 @@ export const PATTERNS: ScalePattern[] = [
   patternMixolydian,
   patternAeolian,
   patternLocrian,
+  patternMajorAShape,
   patternPentatonic,
   patternMinorPentatonic,
 ]
+
+/** The patterns offered in "scala" mode — every one except the shape-only ones. */
+export const SCALE_PATTERNS: ScalePattern[] = PATTERNS.filter((p) => !p.shapeOnly)
 
 export interface ScaleShape {
   id: string

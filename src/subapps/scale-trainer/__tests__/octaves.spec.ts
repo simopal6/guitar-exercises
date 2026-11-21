@@ -48,14 +48,14 @@ describe('findCompleteOctaves', () => {
       return findCompleteOctaves(distinctMidis, rootMidiOf(pattern, STANDARD_TUNING), scale.formula)
     }
 
-    it('finds two complete octaves for "Scala maggiore (1)" (root 6th string, 3rd fret)', () => {
+    it('finds two complete octaves for "Scala maggiore (3)" (root 6th string, 3rd fret)', () => {
       expect(completeOctavesFor('major-e-shape', MAJOR_SCALE)).toEqual([
         { lowMidi: 43, highMidi: 55 },
         { lowMidi: 55, highMidi: 67 },
       ])
     })
 
-    it('finds two complete octaves for "Pentatonica" too, sharing the same root as "Scala maggiore (1)"', () => {
+    it('finds two complete octaves for "Pentatonica" too, sharing the same root as "Scala maggiore (3)"', () => {
       expect(completeOctavesFor('major-pentatonic', MAJOR_PENTATONIC_SCALE)).toEqual([
         { lowMidi: 43, highMidi: 55 },
         { lowMidi: 55, highMidi: 67 },

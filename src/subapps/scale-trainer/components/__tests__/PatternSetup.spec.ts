@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PatternSetup from '../PatternSetup.vue'
-import { PATTERNS } from '../../patterns'
+import { PATTERNS, SCALE_PATTERNS } from '../../patterns'
 
 const baseProps = {
   mode: null as 'forma' | 'scala' | null,
@@ -23,7 +23,7 @@ describe('PatternSetup', () => {
 
   it('does not show the "Forma" or "Scala" row until a mode has been chosen', () => {
     const wrapper = mount(PatternSetup, { props: baseProps })
-    expect(wrapper.text()).not.toContain('Scala maggiore (1)')
+    expect(wrapper.text()).not.toContain('Scala maggiore (3)')
     expect(wrapper.text()).not.toContain('Pentatonica')
     expect(wrapper.text()).not.toContain('Ionian')
   })
@@ -31,7 +31,8 @@ describe('PatternSetup', () => {
   describe('"forma" mode', () => {
     it('shows the "Forma" row, with one pill per shape', () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'forma' } })
-      expect(wrapper.text()).toContain('Scala maggiore (1)')
+      expect(wrapper.text()).toContain('Scala maggiore (3)')
+      expect(wrapper.text()).toContain('Scala maggiore (10)')
       expect(wrapper.text()).toContain('Pentatonica')
     })
 
@@ -53,11 +54,19 @@ describe('PatternSetup', () => {
   describe('"scala" mode', () => {
     it('shows the "Scala" row with every scale across every shape, skipping the shape question entirely', () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
-      // "Scala maggiore (1)" is a shape label (shown only in "forma" mode), never a scale label
-      expect(wrapper.text()).not.toContain('Scala maggiore (1)')
-      for (const pattern of PATTERNS) {
+      // "Scala maggiore (3)" is a shape label (shown only in "forma" mode), never a scale label
+      expect(wrapper.text()).not.toContain('Scala maggiore (3)')
+      for (const pattern of SCALE_PATTERNS) {
         expect(wrapper.text()).toContain(pattern.scaleLabel)
       }
+    })
+
+    it('leaves shape-only patterns out of the "Scala" row (a single "Ionian (I)")', () => {
+      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
+      const labels = wrapper.findAll('button').map((b) => b.text())
+      expect(labels.filter((l) => l === 'Ionian (I)')).toHaveLength(1)
+      expect(SCALE_PATTERNS.map((p) => p.id)).not.toContain('major-a-shape')
+      expect(SCALE_PATTERNS).toHaveLength(9)
     })
 
     it('emits select-scale (not select-shape) when a scale pill is clicked', async () => {
