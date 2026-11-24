@@ -2,9 +2,11 @@ import { MAJOR_SCALE, MAJOR_PENTATONIC_SCALE, DORIAN_SCALE, PHRYGIAN_SCALE, LYDI
 import type { ScalePattern } from './pattern'
 import type { ScalePatternNote } from '../../components/scale-box/pattern'
 import { MAJOR_E_SHAPE_NOTES, MAJOR_E_SHAPE_ROOT } from '../../components/scale-box/majorEShape'
+import { MAJOR_A_SHAPE_NOTES, MAJOR_A_SHAPE_ROOT } from '../../components/scale-box/majorAShape'
 
 const patternARoot = MAJOR_E_SHAPE_ROOT
 const shapeANotes = MAJOR_E_SHAPE_NOTES
+const majorAShapeNotes = MAJOR_A_SHAPE_NOTES
 
 /** First major scale position, root on the 6th string (2nd finger). Hand-written, as most patterns will be. */
 const patternA: ScalePattern = {
@@ -87,27 +89,6 @@ const patternMixolydian = modeReading(eShape, 'mixolydian', MIXOLYDIAN_SCALE.id,
 const patternAeolian = modeReading(eShape, 'aeolian', AEOLIAN_SCALE.id, 'Aeolian (vi)', { string: 4, fret: 2 })
 const patternLocrian = modeReading(eShape, 'locrian', LOCRIAN_SCALE.id, 'Locrian (vii°)', { string: 6, fret: 2 })
 
-/** Every position of the "Scala maggiore (10)" shape — identical for every modal reading of it. */
-const majorAShapeNotes: ScalePatternNote[] = [
-  { string: 6, fret: 2 },
-  { string: 6, fret: 3 },
-  { string: 6, fret: 5 },
-  { string: 5, fret: 2 },
-  { string: 5, fret: 4 },
-  { string: 5, fret: 5 },
-  { string: 4, fret: 2 },
-  { string: 4, fret: 4 },
-  { string: 4, fret: 5 },
-  { string: 3, fret: 2 },
-  { string: 3, fret: 4 },
-  { string: 2, fret: 2 },
-  { string: 2, fret: 3 },
-  { string: 2, fret: 5 },
-  { string: 1, fret: 2 },
-  { string: 1, fret: 3 },
-  { string: 1, fret: 5 },
-]
-
 /**
  * Second major scale position, root on the 5th string (4th finger), so the
  * root sits on the box's last fret. Drawn in the same [2,5] window as the
@@ -120,7 +101,7 @@ const patternMajorAShape: ScalePattern = {
   scaleId: MAJOR_SCALE.id,
   label: 'Scala maggiore (10)',
   scaleLabel: 'Ionian (I)',
-  root: { string: 5, fret: 5 },
+  root: MAJOR_A_SHAPE_ROOT,
   rootOffsetInBox: 3, // root is the box's 4th fret (box = [2,5] for this root)
   notes: majorAShapeNotes,
 }

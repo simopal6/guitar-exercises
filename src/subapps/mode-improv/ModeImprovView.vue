@@ -9,6 +9,7 @@ import ElapsedTime from '../../components/ElapsedTime.vue'
 const {
   phase,
   barsPerChord,
+  shape,
   bpm,
   guitarType,
   isLoading,
@@ -18,6 +19,7 @@ const {
   activeChordIndex,
   canStart,
   setBarsPerChord,
+  setShape,
   setGuitarType,
   start,
   stop,
@@ -35,12 +37,14 @@ const {
 
     <ImprovSetup
       v-if="phase === 'setup'"
+      :shape="shape"
       :bars-per-chord="barsPerChord"
       :guitar-type="guitarType"
       :bpm="bpm"
       :is-loading="isLoading"
       :load-error="loadError"
       :can-start="canStart"
+      @set-shape="setShape"
       @set-bars="setBarsPerChord"
       @set-guitar="setGuitarType"
       @start="start"

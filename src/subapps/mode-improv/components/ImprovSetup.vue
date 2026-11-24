@@ -2,8 +2,10 @@
 import type { GuitarType } from '../../../components/audio/backing/useBackingTrack'
 import { BARS_PER_CHORD_OPTIONS, type BarsPerChord } from '../composables/useModeImprov'
 import GuitarPicker from './GuitarPicker.vue'
+import { MAJOR_SHAPES, type MajorShapeId } from '../modeBox'
 
 defineProps<{
+  shape: MajorShapeId
   barsPerChord: BarsPerChord
   guitarType: GuitarType
   bpm: number
@@ -13,6 +15,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'set-shape': [id: MajorShapeId]
   'set-bars': [bars: BarsPerChord]
   'set-guitar': [type: GuitarType]
   start: []
@@ -34,6 +37,22 @@ function pillClass(active: boolean): string {
       Una chiave maggiore e due suoi accordi, scelti a caso. La base li suona in loop: su ogni accordo improvvisa con il
       modo del suo grado.
     </p>
+
+    <div>
+      <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Forma</p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="option in MAJOR_SHAPES"
+          :key="option.id"
+          type="button"
+          :class="pillClass(option.id === shape)"
+          :aria-pressed="option.id === shape"
+          @click="emit('set-shape', option.id)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </div>
 
     <div>
       <p class="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Battute per accordo</p>

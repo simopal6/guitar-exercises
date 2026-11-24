@@ -11,7 +11,7 @@ import { useBackingTrack, type BackingSequence, type GuitarType } from '../../..
 import { useWakeLock } from '../../../composables/useWakeLock'
 import type { DerivedNote } from '../../../components/scale-box/patternNotes'
 import { drawExtraction, type Extraction } from '../extraction'
-import { KEY_ROOT_OFFSET_IN_BOX, keyBox, modeBoxNotes } from '../modeBox'
+import { keyBox, modeBoxNotes, type MajorShapeId } from '../modeBox'
 import { getModeImprovBpm, setModeImprovBpm } from '../bpmStore'
 
 const BPM_STEP = 5
@@ -37,14 +37,14 @@ export interface ImprovRound {
   extraction: Extraction
   keyName: string
   chords: ImprovChord[]
-  /** Fret of the key's root on the 6th string — the diagram's box is anchored on it. */
+  /** Fret of the key's root on the shape's root string — the diagram's box is anchored on it. */
   keyFret: number
   rootOffsetInBox: number
   sequence: BackingSequence
 }
 
-function buildRound(extraction: Extraction, barsPerChord: number): ImprovRound {
-  const box = keyBox(extraction.key)
+function buildRound(extraction: Extraction, barsPerChord: number, shape: MajorShapeId): ImprovRound {
+  const box = keyBox(extraction.key, shape)
   const chords = extraction.degrees.map((degree) => {
     const triad = diatonicTriad(extraction.key, degree)
     return {
@@ -60,7 +60,7 @@ function buildRound(extraction: Extraction, barsPerChord: number): ImprovRound {
     keyName: majorKeyName(extraction.key),
     chords,
     keyFret: box.keyFret,
-    rootOffsetInBox: KEY_ROOT_OFFSET_IN_BOX,
+    rootOffsetInBox: box.rootOffsetInBox,
     sequence: { chords: chords.map((c) => ({ root: c.triad.root, quality: c.triad.quality })), barsPerChord },
   }
 }
@@ -74,6 +74,7 @@ function buildRound(extraction: Extraction, barsPerChord: number): ImprovRound {
 export function useModeImprov() {
   const phase = ref<ImprovPhase>('setup')
   const barsPerChord = ref<BarsPerChord>(2)
+  const shape = ref<MajorShapeId>('e')
   const backing = useBackingTrack(getModeImprovBpm() ?? DEFAULT_BPM)
   const wakeLock = useWakeLock()
 
@@ -94,7 +95,7 @@ export function useModeImprov() {
   )
 
   function newRound(): void {
-    const next = buildRound(drawExtraction(latest.value?.extraction ?? null), barsPerChord.value)
+    const next = buildRound(drawExtraction(latest.value?.extraction ?? null), barsPerChord.value, shape.value)
     previous.value = latest.value
     latest.value = next
     backing.setSequence(next.sequence)
@@ -103,6 +104,11 @@ export function useModeImprov() {
   function setBarsPerChord(bars: BarsPerChord): void {
     if (phase.value !== 'setup') return
     barsPerChord.value = bars
+  }
+
+  function setShape(id: MajorShapeId): void {
+    if (phase.value !== 'setup') return
+    shape.value = id
   }
 
   function setGuitarType(type: GuitarType): Promise<void> {
@@ -154,6 +160,7 @@ export function useModeImprov() {
   return {
     phase,
     barsPerChord,
+    shape,
     bpm: backing.bpm,
     guitarType: backing.guitarType,
     isLoading: backing.isLoading,
@@ -163,6 +170,7 @@ export function useModeImprov() {
     activeChordIndex,
     canStart,
     setBarsPerChord,
+    setShape,
     setGuitarType,
     start,
     stop,

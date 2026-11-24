@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { keyBox, modeBoxNotes } from '../modeBox'
+import { MAJOR_A_SHAPE_NOTES } from '../../../components/scale-box/majorAShape'
 import { diatonicTriad, type PitchClass } from '../../../theory'
 
 const ALL_KEYS = Array.from({ length: 12 }, (_, i) => i as PitchClass)
@@ -54,5 +55,40 @@ describe('modeBoxNotes', () => {
         expect(() => modeBoxNotes(keyBox(key), degree, diatonicTriad(key, degree).root)).not.toThrow()
       }
     }
+  })
+})
+
+describe('keyBox with the "Scala maggiore (10)" shape', () => {
+  it('puts G on the 5th string\'s 10th fret', () => {
+    const box = keyBox(7, 'a')
+    expect(box.keyFret).toBe(10)
+    expect(box.rootOffsetInBox).toBe(3)
+    expect(box.notes).toContainEqual({ string: 5, fret: 10 })
+  })
+
+  it('puts the key root on the 5th string between the 5th and 16th fret, in a 4-fret box that never reaches the nut', () => {
+    for (const key of ALL_KEYS) {
+      const box = keyBox(key, 'a')
+      expect(box.keyFret).toBeGreaterThanOrEqual(5)
+      expect(box.keyFret).toBeLessThanOrEqual(16)
+      const frets = box.notes.map((n) => n.fret)
+      expect(Math.min(...frets)).toBe(box.keyFret - 3)
+      expect(Math.max(...frets)).toBe(box.keyFret)
+      expect(Math.min(...frets)).toBeGreaterThanOrEqual(2)
+      expect(box.notes).toHaveLength(MAJOR_A_SHAPE_NOTES.length)
+    }
+    expect(keyBox(2, 'a').keyFret).toBe(5) // D: 5th fret
+    expect(keyBox(10, 'a').keyFret).toBe(13) // Bb: 1 → 13
+  })
+
+  it('works for every degree in every key, and marks the Lydian #4', () => {
+    for (const key of ALL_KEYS) {
+      for (let degree = 1; degree <= 7; degree++) {
+        expect(() => modeBoxNotes(keyBox(key, 'a'), degree, diatonicTriad(key, degree).root)).not.toThrow()
+      }
+    }
+    const sharps = modeBoxNotes(keyBox(0, 'a'), 4, diatonicTriad(0, 4).root).filter((n) => n.sharp)
+    expect(sharps.length).toBeGreaterThan(0)
+    expect(sharps.every((n) => n.degree === 4 && n.midi % 12 === 11)).toBe(true)
   })
 })

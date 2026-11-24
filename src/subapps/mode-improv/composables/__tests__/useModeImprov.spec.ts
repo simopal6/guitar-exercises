@@ -126,6 +126,29 @@ describe('useModeImprov', () => {
     expect(improv.barsPerChord.value).toBe(2)
   })
 
+  it('uses the "Scala maggiore (3)" box by default, and the chosen shape after setShape', async () => {
+    const improv = withSetup(useModeImprov)
+    expect(improv.shape.value).toBe('e')
+    improv.setShape('a')
+    await improv.start()
+    const round = improv.round.value!
+    expect(round.rootOffsetInBox).toBe(3)
+    expect(round.keyFret).toBeGreaterThanOrEqual(5)
+    expect(round.keyFret).toBeLessThanOrEqual(16)
+
+    improv.nextRound() // a new draw keeps the chosen shape
+    hear(fake.sequences[1])
+    expect(improv.round.value!.rootOffsetInBox).toBe(3)
+  })
+
+  it('the shape can only change in setup', async () => {
+    const improv = withSetup(useModeImprov)
+    await improv.start()
+    improv.setShape('a')
+    expect(improv.shape.value).toBe('e')
+    expect(improv.round.value!.rootOffsetInBox).toBe(1)
+  })
+
   it('stop() returns to setup and clears the round', async () => {
     const improv = withSetup(useModeImprov)
     await improv.start()
