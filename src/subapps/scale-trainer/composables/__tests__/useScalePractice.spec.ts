@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { useScalePractice } from '../useScalePractice'
 import { getPatternTempo } from '../../patternTempoStore'
-import { PATTERNS, SCALE_PATTERNS } from '../../patterns'
+import { PATTERNS } from '../../patterns'
 
 vi.mock('tone', () => {
   const Transport = { bpm: { value: 120 }, start: vi.fn(), stop: vi.fn() }
@@ -103,37 +103,42 @@ describe('useScalePractice', () => {
     expect(result.canStart.value).toBe(true)
   })
 
-  it('in "scala" mode, a shape-only pattern cannot be picked as a scale', () => {
+  it('in "scala" mode, selecting a shape does not pick a scale: the player chooses one next', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
-    result.selectScale('major-a-shape')
+    result.selectShape('major-a-shape')
+    expect(result.shapeId.value).toBe('major-a-shape')
     expect(result.patternId.value).toBeNull()
-  })
-
-  it('in "scala" mode, selectScale picks directly from any scale, with no shape question first', () => {
-    const { result } = withSetup(useScalePractice)
-    result.selectMode('scala')
-    expect(result.shapeId.value).toBeNull() // no "Forma" row/step in this mode
-    result.selectScale('major-e-shape-dorian') // Dorian, without ever picking "Scala maggiore (3)" as a shape
-    expect(result.patternId.value).toBe('major-e-shape-dorian')
-    expect(result.shapeId.value).toBe('major-e-shape') // bookkeeping only, derived from the chosen scale
+    expect(result.canStart.value).toBe(false)
+    result.selectScale('major-a-shape-dorian')
+    expect(result.patternId.value).toBe('major-a-shape-dorian')
     expect(result.canStart.value).toBe(true)
   })
 
-  it('in "scala" mode, selectScale can pick a scale belonging to a different shape right after another, with no shape step in between', () => {
+  it('in "scala" mode, selectScale only accepts a scale of the chosen shape', () => {
     const { result } = withSetup(useScalePractice)
     result.selectMode('scala')
-    result.selectScale('major-e-shape') // Ionian
-    expect(result.patternId.value).toBe('major-e-shape')
-    result.selectScale('major-pentatonic')
-    expect(result.patternId.value).toBe('major-pentatonic')
-    expect(result.shapeId.value).toBe('major-pentatonic')
+    result.selectScale('major-e-shape-dorian') // no shape yet
+    expect(result.patternId.value).toBeNull()
+    result.selectShape('major-pentatonic')
+    result.selectScale('major-e-shape-dorian') // another shape's scale
+    expect(result.patternId.value).toBeNull()
   })
 
-  it('every scale in the list has at least one complete octave, so "scala" mode can start on any of them', () => {
-    for (const pattern of SCALE_PATTERNS) {
+  it('in "scala" mode, changing shape clears the chosen scale', () => {
+    const { result } = withSetup(useScalePractice)
+    result.selectMode('scala')
+    result.selectShape('major-e-shape')
+    result.selectScale('major-e-shape-dorian')
+    result.selectShape('major-a-shape')
+    expect(result.patternId.value).toBeNull()
+  })
+
+  it('every scale of every shape has at least one complete octave, so "scala" mode can start on any of them', () => {
+    for (const pattern of PATTERNS) {
       const { result } = withSetup(useScalePractice)
       result.selectMode('scala')
+      result.selectShape(pattern.shapeId)
       result.selectScale(pattern.id)
       expect({ id: pattern.id, octaves: result.completeOctaves.value.length > 0 }).toEqual({ id: pattern.id, octaves: true })
       expect(result.canStart.value).toBe(true)
@@ -236,7 +241,8 @@ describe('useScalePractice', () => {
   describe('"scala" mode (one root-to-root octave)', () => {
     function setupScala(result: ReturnType<typeof useScalePractice>) {
       result.selectMode('scala')
-      result.selectScale('major-e-shape') // Ionian, picked directly — no shape step in "scala" mode
+      result.selectShape('major-e-shape')
+      result.selectScale('major-e-shape') // Ionian
     }
 
     it('finds the two complete octaves of "Scala maggiore (3)", defaulting to the first one', () => {

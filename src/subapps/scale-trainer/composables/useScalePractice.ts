@@ -2,7 +2,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { STANDARD_TUNING, SCALES } from '../../../theory'
 import { clampBpm, useMetronome } from '../../../components/audio/useMetronome'
 import { useWakeLock } from '../../../composables/useWakeLock'
-import { PATTERNS, SCALE_PATTERNS } from '../patterns'
+import { PATTERNS, patternsOfShape } from '../patterns'
 import { STANDARD_BOX_SIZE } from '../../../components/scale-box/pattern'
 import { derivePatternNotes, dropRedundantMarginNotes, rootMidiOf } from '../../../components/scale-box/patternNotes'
 import { findCompleteOctaves, type ScaleOctave } from '../octaves'
@@ -23,11 +23,9 @@ export type PracticeMode = 'forma' | 'scala'
 export function useScalePractice() {
   const phase = ref<PracticePhase>('setup')
   // All start unset: the setup screen reveals its rows in sequence as each is
-  // answered. "Forma" mode asks which shape (selectShape), which resolves
-  // its primary scale on its own. "Scala" mode skips the shape question
-  // entirely and lets the player pick directly from every scale that
-  // exists, across all shapes (selectScale) — shapeId is then just derived
-  // from whichever scale was picked, for bookkeeping, never chosen itself.
+  // answered. Both modes ask which shape first (selectShape). "Forma" mode
+  // then resolves the shape's primary scale on its own; "Scala" mode asks
+  // which of the shape's scales to play (selectScale), then which octave.
   const mode = ref<PracticeMode | null>(null)
   const shapeId = ref<string | null>(null)
   const patternId = ref<string | null>(null)
@@ -153,25 +151,21 @@ export function useScalePractice() {
     selectedOctaveIndex.value = 0
   }
 
-  // "Forma" mode's shape row: never asks which scale to play, always uses
-  // the shape's primary (first-listed) scale.
+  // The shape row, in both modes. "Forma" never asks which scale to play and
+  // uses the shape's primary (first-listed) one; "scala" waits for selectScale.
   function selectShape(id: string) {
     if (phase.value !== 'setup') return
     shapeId.value = id
-    const matches = PATTERNS.filter((p) => p.shapeId === id)
-    patternId.value = matches[0]?.id ?? null
+    patternId.value = mode.value === 'forma' ? (patternsOfShape(id)[0]?.id ?? null) : null
     selectedOctaveIndex.value = 0
   }
 
-  // "Scala" mode's scale row: picks directly from every scale across every
-  // shape — no shape question first. shapeId is set from the chosen
-  // pattern purely as bookkeeping, nothing reads it to filter a list here.
+  // "Scala" mode's scale row: one of the chosen shape's scales.
   function selectScale(id: string) {
     if (phase.value !== 'setup') return
-    const pattern = SCALE_PATTERNS.find((p) => p.id === id)
+    const pattern = patternsOfShape(shapeId.value).find((p) => p.id === id)
     if (!pattern) return
     patternId.value = pattern.id
-    shapeId.value = pattern.shapeId
     selectedOctaveIndex.value = 0
   }
 

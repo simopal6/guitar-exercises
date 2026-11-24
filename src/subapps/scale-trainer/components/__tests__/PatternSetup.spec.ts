@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PatternSetup from '../PatternSetup.vue'
-import { PATTERNS, SCALE_PATTERNS } from '../../patterns'
+import { PATTERNS, patternsOfShape } from '../../patterns'
 
 const baseProps = {
   mode: null as 'forma' | 'scala' | null,
@@ -52,33 +52,48 @@ describe('PatternSetup', () => {
   })
 
   describe('"scala" mode', () => {
-    it('shows the "Scala" row with every scale across every shape, skipping the shape question entirely', () => {
+    it('asks for the shape first: the "Forma" row is shown, the "Scala" row is not', () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
-      // "Scala maggiore (3)" is a shape label (shown only in "forma" mode), never a scale label
-      expect(wrapper.text()).not.toContain('Scala maggiore (3)')
-      for (const pattern of SCALE_PATTERNS) {
-        expect(wrapper.text()).toContain(pattern.scaleLabel)
-      }
+      expect(wrapper.text()).toContain('Scala maggiore (3)')
+      expect(wrapper.text()).toContain('Scala maggiore (10)')
+      expect(wrapper.text()).toContain('Pentatonica')
+      expect(wrapper.text()).not.toContain('Ionian')
     })
 
-    it('leaves shape-only patterns out of the "Scala" row (a single "Ionian (I)")', () => {
+    it('emits select-shape when a shape pill is clicked', async () => {
       const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
+      await wrapper.findAll('button').find((b) => b.text() === 'Scala maggiore (10)')!.trigger('click')
+      expect(wrapper.emitted('select-shape')).toEqual([['major-a-shape']])
+    })
+
+    it('offers the 7 modes for a major shape', () => {
+      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala', shapeId: 'major-a-shape' } })
       const labels = wrapper.findAll('button').map((b) => b.text())
-      expect(labels.filter((l) => l === 'Ionian (I)')).toHaveLength(1)
-      expect(SCALE_PATTERNS.map((p) => p.id)).not.toContain('major-a-shape')
-      expect(SCALE_PATTERNS).toHaveLength(9)
+      for (const label of ['Ionian (I)', 'Dorian (ii)', 'Phrygian (iii)', 'Lydian (IV)', 'Mixolydian (V)', 'Aeolian (vi)', 'Locrian (vii°)']) {
+        expect(labels.filter((l) => l === label)).toHaveLength(1)
+      }
+      expect(patternsOfShape('major-a-shape')).toHaveLength(7)
+      expect(patternsOfShape('major-e-shape')).toHaveLength(7)
+    })
+
+    it('offers only major and minor for the pentatonic shape', () => {
+      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala', shapeId: 'major-pentatonic' } })
+      expect(wrapper.text()).toContain('Pentatonica maggiore')
+      expect(wrapper.text()).toContain('Pentatonica minore')
+      expect(wrapper.text()).not.toContain('Ionian')
+      expect(patternsOfShape('major-pentatonic').map((p) => p.scaleLabel)).toEqual(['Pentatonica maggiore', 'Pentatonica minore'])
     })
 
     it('emits select-scale (not select-shape) when a scale pill is clicked', async () => {
-      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala' } })
+      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala', shapeId: 'major-e-shape' } })
       const dorianButton = wrapper.findAll('button').find((b) => b.text() === 'Dorian (ii)')!
       await dorianButton.trigger('click')
       expect(wrapper.emitted('select-scale')).toEqual([['major-e-shape-dorian']])
-      expect(wrapper.emitted('select-shape')).toBeUndefined()
+      expect(wrapper.emitted('select-shape')).toBeUndefined() // the shape row is still there, just not clicked
     })
 
-    it('highlights the active scale pill by patternId, regardless of which shape it belongs to', () => {
-      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala', patternId: 'major-pentatonic' } })
+    it('highlights the active scale pill by patternId', () => {
+      const wrapper = mount(PatternSetup, { props: { ...baseProps, mode: 'scala', shapeId: 'major-pentatonic', patternId: 'major-pentatonic' } })
       const pentatonicButton = wrapper.findAll('button').find((b) => b.text() === 'Pentatonica maggiore')!
       expect(pentatonicButton.classes().join(' ')).toContain('bg-indigo-500')
     })

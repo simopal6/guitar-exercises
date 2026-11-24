@@ -270,8 +270,32 @@ describe('major-a-shape ("Scala maggiore (10)", root on the 5th string\'s 4th fi
     const roots = derivePatternNotes(pattern, MAJOR_SCALE, STANDARD_TUNING).filter((n) => n.degree === 1)
     expect(roots.some((n) => n.stringIndex === 1 && n.fret === 5)).toBe(true)
   })
+})
 
-  it('is offered only as a shape, not in the "Scala" list', () => {
-    expect(pattern.shapeOnly).toBe(true)
-  })
+describe('the other six modes of "Scala maggiore (10)"', () => {
+  const ionian = PATTERNS.find((p) => p.id === 'major-a-shape')!
+  const cases: { id: string; root: ScalePatternNote; altered: Record<number, string> }[] = [
+    { id: 'major-a-shape-dorian', root: { string: 4, fret: 2 }, altered: { 3: 'b', 7: 'b' } },
+    { id: 'major-a-shape-phrygian', root: { string: 6, fret: 2 }, altered: { 2: 'b', 3: 'b', 6: 'b', 7: 'b' } },
+    { id: 'major-a-shape-lydian', root: { string: 6, fret: 3 }, altered: { 4: '#' } },
+    { id: 'major-a-shape-mixolydian', root: { string: 6, fret: 5 }, altered: { 7: 'b' } },
+    { id: 'major-a-shape-aeolian', root: { string: 5, fret: 2 }, altered: { 3: 'b', 6: 'b', 7: 'b' } },
+    { id: 'major-a-shape-locrian', root: { string: 5, fret: 4 }, altered: { 2: 'b', 3: 'b', 5: 'b', 6: 'b', 7: 'b' } },
+  ]
+
+  for (const { id, root, altered } of cases) {
+    it(`${id}: same 17 positions, root at ${root.string}/${root.fret}, alterations ${JSON.stringify(altered)}`, () => {
+      const pattern = PATTERNS.find((p) => p.id === id)!
+      expect(pattern.shapeId).toBe('major-a-shape')
+      expect(pattern.label).toBe('Scala maggiore (10)')
+      expect(pattern.notes).toEqual(ionian.notes)
+      expect(pattern.root).toEqual(root)
+      expect(pattern.root.fret - pattern.rootOffsetInBox).toBe(2)
+      const scale = SCALES.find((s) => s.id === pattern.scaleId)!
+      for (const note of derivePatternNotes(pattern, scale, STANDARD_TUNING)) {
+        const mark = note.flat ? 'b' : note.sharp ? '#' : undefined
+        expect(mark).toBe(altered[note.degree])
+      }
+    })
+  }
 })

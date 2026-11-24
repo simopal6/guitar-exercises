@@ -18,6 +18,4 @@ export interface ScalePattern extends BoxPattern {
    * the root on row 2, while an "A-shape" box has it on row 4.
    */
   rootOffsetInBox: number
-  /** Offered only as a shape in "forma" mode, never in the "scala" mode's scale list. */
-  shapeOnly?: boolean
 }
